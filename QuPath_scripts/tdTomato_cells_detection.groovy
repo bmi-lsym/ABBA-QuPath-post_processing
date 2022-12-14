@@ -1,0 +1,2 @@
+setImageType('FLUORESCENCE');
+runPlugin('qupath.imagej.detect.cells.WatershedCellDetection', '{"detectionImage": "FL CY3",  "requestedPixelSizeMicrons": 0.6442,  "backgroundRadiusMicrons": 5.0,  "medianRadiusMicrons": 0.0,  "sigmaMicrons": 2,  "minAreaMicrons": 30,  "maxAreaMicrons": 250.0,  "threshold": 10.0,  "watershedPostProcess": false,  "cellExpansionMicrons": 1.0,  "includeNuclei": true,  "smoothBoundaries": true,  "makeMeasurements": true}');
