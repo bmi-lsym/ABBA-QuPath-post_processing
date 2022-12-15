@@ -4,7 +4,7 @@ Scripts for quantification of the data resulting from the ABBA-QuPath pipeline f
 
 Manual for the post-ABBA/QuPath quantification script by Olexiy Kochubey.
 
-QuPath is an open source bioimage analysis software developed at the university of Edinburgh by Dr. Peter Bankhead and colleagues (https://doi.org/10.1038/s41598-017-17204-5), and can be
+QuPath is an open source bioimage analysis software developed at the University of Edinburgh by Dr. Peter Bankhead and colleagues (https://doi.org/10.1038/s41598-017-17204-5), and can be
   found at https://qupath.github.io/ 
 
 ABBA is a tool developed at Bioimaging and Optics Platform (BIOP) at EPFL, Lausanne, by Dr. Nicolas Chiaruttini (@NicoKiaru), and can be found at https://github.com/BIOP/ijp-imagetoatlas
@@ -36,7 +36,7 @@ Installation:
         conda env create -f abba_env.yml 
              -> Note that it is possible to give the environment another name by using the following command: 
              -> conda env create --name another_name -f abba_env.yml
- -  to complete the installation of paquo package (https://github.com/bayer-science-for-a-better-life/paquo), move the file Setup/.paquo.toml into the folder c:\Anaconda3\envs\abba\ or similar as appropriate; do not leave this file in the same sub-folder as the Jupyter notebook
+ -  to complete the installation of paquo package (https://github.com/bayer-science-for-a-better-life/paquo), move the file Setup/.paquo.toml into the folder c:\Anaconda3\envs\abba\ or similar as appropriate; do not leave this file in the same sub-folder as the Jupyter notebook.
          Edit the line inside the file which points to the QuPath installation folder, it should read similar to the following:  
          qupath_dir = "C:/QuPath/QuPath_0_3_2/"
  - move the files "LSYM_ABBA_QuPath.py", "ABBA_QuPath_post_processing.ipynb" and the sub-folder "atlas_ontology" together into some working folder, for example "d:\MyFolder\ABBA_QuPath_scripts"
