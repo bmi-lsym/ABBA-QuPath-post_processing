@@ -234,7 +234,7 @@ Function ABBA_processing_GUI_doone()
       
       Process_acronyms_list(acros, dataset_acros_left, dataset_waves_left, total_density_left, atlas_acros, atlas_names,  1 , res_dens_left)
       Process_acronyms_list($(res_dens_left+"_acros"), dataset_acros_right, dataset_waves_right, total_density_right, atlas_acros, atlas_names,  0 , res_dens_right)
-      MakeBarGraph($(res_dens_left+"_sortvals"), $(res_dens_right+"_sortvals"), $(res_dens_left+"_labels"), $(res_dens_left+"_label_locs"),dataset_ID+"_"+brain_area+"_total_density","total density of detections (mm\\S-2\\M)")
+      MakeBarGraph($(res_dens_left+"_sortvals"), $(res_dens_right+"_sortvals"), $(res_dens_left+"_labels"), $(res_dens_left+"_label_locs"),dataset_ID+"_"+brain_area+"_tot_dens","total density of detections (mm\\S-2\\M)")
       
       Duplicate/O $(res_dens_left+"_wavelist") $(res_densAP_left+"_wavelist")
       Duplicate/O $(res_dens_right+"_wavelist") $(res_densAP_right+"_wavelist")
@@ -252,7 +252,7 @@ Function ABBA_processing_GUI_doone()
        
       Process_acronyms_list(acros, dataset_acros_left, dataset_waves_left, total_detections_left, atlas_acros, atlas_names,  1 , res_dets_left)
       Process_acronyms_list($(res_dets_left+"_acros"), dataset_acros_right, dataset_waves_right, total_detections_right, atlas_acros, atlas_names,  0 , res_dets_right)
-      MakeBarGraph($(res_dets_left+"_sortvals"), $(res_dets_right+"_sortvals"), $(res_dets_left+"_labels"), $(res_dets_left+"_label_locs"),dataset_ID+"_"+brain_area+"_total_detections","total number of detections")
+      MakeBarGraph($(res_dets_left+"_sortvals"), $(res_dets_right+"_sortvals"), $(res_dets_left+"_labels"), $(res_dets_left+"_label_locs"),dataset_ID+"_"+brain_area+"_tot_dets","total number of detections")
       
       Duplicate/O $(res_dets_left+"_wavelist") $(res_detsAP_left+"_wavelist")
       Duplicate/O $(res_dets_right+"_wavelist") $(res_detsAP_right+"_wavelist")
@@ -274,7 +274,7 @@ Function ABBA_processing_GUI_doone()
       
       Process_acronyms_list(acros, dataset_acros_right, dataset_waves_right, total_density_right, atlas_acros, atlas_names,  1 , res_dens_right)
       Process_acronyms_list($(res_dens_right+"_acros"), dataset_acros_left, dataset_waves_left, total_density_left, atlas_acros, atlas_names,  0 , res_dens_left)
-      MakeBarGraph($(res_dens_left+"_sortvals"), $(res_dens_right+"_sortvals"), $(res_dens_right+"_labels"), $(res_dens_right+"_label_locs"),dataset_ID+"_"+brain_area+"_total_density","total density of detections (mm\\S-2\\M)")
+      MakeBarGraph($(res_dens_left+"_sortvals"), $(res_dens_right+"_sortvals"), $(res_dens_right+"_labels"), $(res_dens_right+"_label_locs"),dataset_ID+"_"+brain_area+"_tot_dens","total density of detections (mm\\S-2\\M)")
       
       Duplicate/O $(res_dens_left+"_wavelist") $(res_densAP_left+"_wavelist")
       Duplicate/O $(res_dens_right+"_wavelist") $(res_densAP_right+"_wavelist")
@@ -291,7 +291,7 @@ Function ABBA_processing_GUI_doone()
        
       Process_acronyms_list(acros, dataset_acros_right, dataset_waves_right, total_detections_right, atlas_acros, atlas_names,  1 , res_dets_right)
       Process_acronyms_list($(res_dets_right+"_acros"), dataset_acros_left, dataset_waves_left, total_detections_left, atlas_acros, atlas_names,  0 , res_dets_left)
-      MakeBarGraph($(res_dets_left+"_sortvals"), $(res_dets_right+"_sortvals"), $(res_dets_right+"_labels"), $(res_dets_right+"_label_locs"),dataset_ID+"_"+brain_area+"_total_detections","total number of detections")
+      MakeBarGraph($(res_dets_left+"_sortvals"), $(res_dets_right+"_sortvals"), $(res_dets_right+"_labels"), $(res_dets_right+"_label_locs"),dataset_ID+"_"+brain_area+"_tot_dets","total number of detections")
       
       Duplicate/O $(res_dets_left+"_wavelist") $(res_detsAP_left+"_wavelist")
       Duplicate/O $(res_dets_right+"_wavelist") $(res_detsAP_right+"_wavelist")
@@ -449,7 +449,7 @@ Function ABBA_processing_GUI_domany()
       
       Process_acronyms_list(acros, dataset_acros_left, dataset_waves_left, total_density_left, atlas_acros, atlas_names,  1 , res_dens_left)
       Process_acronyms_list($(res_dens_left+"_acros"), dataset_acros_right, dataset_waves_right, total_density_right, atlas_acros, atlas_names,  0 , res_dens_right)
-      MakeBarGraph_average($(res_dens_left+"_sortvals"), $(res_dens_right+"_sortvals"), $(res_dens_left+"_labels"), $(res_dens_left+"_label_locs"),dataset_ID+"_"+brain_area+"_total_density","total density of detections (mm\\S-2\\M)")
+      MakeBarGraph_average($(res_dens_left+"_sortvals"), $(res_dens_right+"_sortvals"), $(res_dens_left+"_labels"), $(res_dens_left+"_label_locs"),dataset_ID+"_tot_dens","total density of detections (mm\\S-2\\M)")
       
       Duplicate/O $(res_dens_left+"_wavelist") $(res_densAP_left+"_wavelist")
       Duplicate/O $(res_dens_right+"_wavelist") $(res_densAP_right+"_wavelist")
@@ -457,16 +457,16 @@ Function ABBA_processing_GUI_domany()
       densAP_left=ReplaceString("total_density", densAP_left[p], "density")
       densAP_right=ReplaceString("total_density", densAP_right[p], "density")
       
-      MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_left, min(plot_N,numpnts(densAP_left)),dataset_ID+"_"+brain_area+"_AP_left_dens",1,"density of detections (mm\\S-2\\M)", "(65535,0,0)")
+      MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_left, min(plot_N,numpnts(densAP_left)),dataset_ID+"_AP_left_dens",1,"density of detections (mm\\S-2\\M)", "(65535,0,0)")
       plotN=min(plot_N,numpnts(densAP_left))
-      MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_right, min(plot_N,numpnts(densAP_right)),dataset_ID+"_"+brain_area+"_AP_right_dens",1,"density of detections (mm\\S-2\\M)", "(0,0,65535)")
+      MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_right, min(plot_N,numpnts(densAP_right)),dataset_ID+"_AP_right_dens",1,"density of detections (mm\\S-2\\M)", "(0,0,65535)")
 
        //detections
        
        
       Process_acronyms_list(acros, dataset_acros_left, dataset_waves_left, total_detections_left, atlas_acros, atlas_names,  1 , res_dets_left)
       Process_acronyms_list($(res_dets_left+"_acros"), dataset_acros_right, dataset_waves_right, total_detections_right, atlas_acros, atlas_names,  0 , res_dets_right)
-      MakeBarGraph_average($(res_dets_left+"_sortvals"), $(res_dets_right+"_sortvals"), $(res_dets_left+"_labels"), $(res_dets_left+"_label_locs"),dataset_ID+"_"+brain_area+"_total_detections","total number of detections")
+      MakeBarGraph_average($(res_dets_left+"_sortvals"), $(res_dets_right+"_sortvals"), $(res_dets_left+"_labels"), $(res_dets_left+"_label_locs"),dataset_ID+"_tot_dets","total number of detections")
       
       Duplicate/O $(res_dets_left+"_wavelist") $(res_detsAP_left+"_wavelist")
       Duplicate/O $(res_dets_right+"_wavelist") $(res_detsAP_right+"_wavelist")
@@ -474,9 +474,9 @@ Function ABBA_processing_GUI_domany()
       detsAP_left=ReplaceString("total_detections", detsAP_left[p], "detections")
       detsAP_right=ReplaceString("total_detections", detsAP_right[p], "detections")
       
-      MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_left, min(plot_N,numpnts(detsAP_left)),dataset_ID+"_"+brain_area+"_AP_left_dets",1,"number of detections", "(65535,0,0)")
+      MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_left, min(plot_N,numpnts(detsAP_left)),dataset_ID+"_AP_left_dets",1,"number of detections", "(65535,0,0)")
       plotN=min(plot_N,numpnts(detsAP_left))
-      MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_right, min(plot_N,numpnts(detsAP_right)),dataset_ID+"_"+brain_area+"_AP_right_dets",1,"number of detections", "(0,0,65535)")
+      MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_right, min(plot_N,numpnts(detsAP_right)),dataset_ID+"_AP_right_dets",1,"number of detections", "(0,0,65535)")
 
        
        
@@ -488,7 +488,7 @@ Function ABBA_processing_GUI_domany()
       
       Process_acronyms_list(acros, dataset_acros_right, dataset_waves_right, total_density_right, atlas_acros, atlas_names,  1 , res_dens_right)
       Process_acronyms_list($(res_dens_right+"_acros"), dataset_acros_left, dataset_waves_left, total_density_left, atlas_acros, atlas_names,  0 , res_dens_left)
-      MakeBarGraph_average($(res_dens_left+"_sortvals"), $(res_dens_right+"_sortvals"), $(res_dens_right+"_labels"), $(res_dens_right+"_label_locs"),dataset_ID+"_"+brain_area+"_total_density","total density of detections (mm\\S-2\\M)")
+      MakeBarGraph_average($(res_dens_left+"_sortvals"), $(res_dens_right+"_sortvals"), $(res_dens_right+"_labels"), $(res_dens_right+"_label_locs"),dataset_ID+"_tot_dens","total density of detections (mm\\S-2\\M)")
       
       Duplicate/O $(res_dens_left+"_wavelist") $(res_densAP_left+"_wavelist")
       Duplicate/O $(res_dens_right+"_wavelist") $(res_densAP_right+"_wavelist")
@@ -496,8 +496,8 @@ Function ABBA_processing_GUI_domany()
       densAP_left=ReplaceString("total_density", densAP_left[p], "density")
       densAP_right=ReplaceString("total_density", densAP_right[p], "density")
       
-      MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_left, min(plot_N,numpnts(densAP_left)),dataset_ID+"_"+brain_area+"_AP_left_dens",1, "density of detections (mm\\S-2\\M)", "(65535,0,0)")
-      MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_right, min(plot_N,numpnts(densAP_right)),dataset_ID+"_"+brain_area+"_AP_right_dens",1, "density of detections (mm\\S-2\\M)", "(0,0,65535)")
+      MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_left, min(plot_N,numpnts(densAP_left)),dataset_ID+"_AP_left_dens",1, "density of detections (mm\\S-2\\M)", "(65535,0,0)")
+      MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_right, min(plot_N,numpnts(densAP_right)),dataset_ID+"_AP_right_dens",1, "density of detections (mm\\S-2\\M)", "(0,0,65535)")
       plotN=min(plot_N,numpnts(densAP_right))
 
        //detections
@@ -505,7 +505,7 @@ Function ABBA_processing_GUI_domany()
        
       Process_acronyms_list(acros, dataset_acros_right, dataset_waves_right, total_detections_right, atlas_acros, atlas_names,  1 , res_dets_right)
       Process_acronyms_list($(res_dets_right+"_acros"), dataset_acros_left, dataset_waves_left, total_detections_left, atlas_acros, atlas_names,  0 , res_dets_left)
-      MakeBarGraph_average($(res_dets_left+"_sortvals"), $(res_dets_right+"_sortvals"), $(res_dets_right+"_labels"), $(res_dets_right+"_label_locs"),dataset_ID+"_"+brain_area+"_total_detections","total number of detections")
+      MakeBarGraph_average($(res_dets_left+"_sortvals"), $(res_dets_right+"_sortvals"), $(res_dets_right+"_labels"), $(res_dets_right+"_label_locs"),dataset_ID+"_tot_dets","total number of detections")
       
       Duplicate/O $(res_dets_left+"_wavelist") $(res_detsAP_left+"_wavelist")
       Duplicate/O $(res_dets_right+"_wavelist") $(res_detsAP_right+"_wavelist")
@@ -513,9 +513,9 @@ Function ABBA_processing_GUI_domany()
       detsAP_left=ReplaceString("total_detections", detsAP_left[p], "detections")
       detsAP_right=ReplaceString("total_detections", detsAP_right[p], "detections")
       
-      MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_left, min(plot_N,numpnts(detsAP_left)),dataset_ID+"_"+brain_area+"_AP_left_dets",1,"number of detections", "(65535,0,0)")
+      MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_left, min(plot_N,numpnts(detsAP_left)),dataset_ID+"_AP_left_dets",1,"number of detections", "(65535,0,0)")
       plotN=min(plot_N,numpnts(detsAP_left))
-      MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_right, min(plot_N,numpnts(detsAP_right)),dataset_ID+"_"+brain_area+"_AP_right_dets",1,"number of detections", "(0,0,65535)")
+      MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_right, min(plot_N,numpnts(detsAP_right)),dataset_ID+"_AP_right_dets",1,"number of detections", "(0,0,65535)")
 
 	  endif
      
@@ -1432,6 +1432,10 @@ Function MakeAPGraph_averageAPs(acronym_lookup, mouse_list, w_data, top_n, res_w
  ModifyGraph btLen=4
  Label left axis_name//"density (mm\\S-2\\M)";DelayUpdate
  Label bottom "AP coordinate (mm)"
+ 
+ SetDrawEnv xcoord= prel,ycoord= prel
+ SetDrawEnv fstyle= 1,fsize= 9;DelayUpdate
+ DrawText 0.753056234718826,0.111627906976744, acro
  
  endfor //over acronyms
   
