@@ -176,6 +176,16 @@ Function ABBA_processing_GUI_doone()
  String sort_By=sortBy, sortBy_list="left;right"
  
  
+ String LayoutsIndividual
+ 
+ SVAR Layouts_individual=gLayoutsIndividual
+  if(SVAR_Exists(Layouts_individual)!=1)
+	  String/G gLayoutsIndividual="Layout_dens;Layout_dets"
+	  SVAR Layouts_individual=gLayoutsIndividual
+   endif
+ 
+ LayoutsIndividual=Layouts_individual
+ 
  
  
  
@@ -189,8 +199,9 @@ Function ABBA_processing_GUI_doone()
    Prompt brain_area, "Choose the brain area (from Brain_Areas folder)", popup, brain_areas
    Prompt sort_By, "Master sorting by which side?", popup, sortBy_list
    Prompt plot_N, "How many of the top AP-traces to plot?"
+   Prompt LayoutsIndividual, "Layout windows for appending the respective results (density;detections)"
 	
-   DoPrompt "Set analysis parameters", dataset_ID, brain_area, sort_By, plot_N
+   DoPrompt "Set analysis parameters", dataset_ID, brain_area, sort_By, plot_N, LayoutsIndividual
 	
    cancel_flag=V_flag
    
@@ -200,6 +211,13 @@ Function ABBA_processing_GUI_doone()
      brain_ar=brain_area
      datasetID=dataset_ID
      plotN=plot_N
+     
+     Layouts_individual=LayoutsIndividual
+     
+     String lay_dens=StringFromList(0, LayoutsIndividual,";"), lay_dets=StringFromList(1, LayoutsIndividual,";")
+     String populate_layout, graphs_left, graphs_right     
+     Variable i, lay_dens_existed=1, lay_dets_existed=1
+     
      
      Wave/T atlas_acros=$"root:Atlas_DB:atlas_acronyms", atlas_names=$"root:Atlas_DB:atlas_names"
      Wave/T acros=$"root:Brain_Areas:"+brain_area+"_acronyms"
@@ -227,6 +245,21 @@ Function ABBA_processing_GUI_doone()
 	  
 	
      SetDataFolder $("root:"+dataset_ID+":res:")
+     
+     
+      if (strlen(WinList(lay_dens, ";", "WIN:4"))==0)
+       NewLayout as "Density of detections for "+dataset_ID
+       DoWindow/C $lay_dens
+       lay_dens_existed=0
+      endif
+     
+     if (strlen(WinList(lay_dets, ";", "WIN:4"))==0)
+      NewLayout as "Number of detections for "+dataset_ID
+      DoWindow/C $lay_dets
+      lay_dets_existed=0
+     endif
+               
+     
    
      if (CmpStr(sort_By,"left")==0) //master sort by the left side
  
@@ -235,6 +268,22 @@ Function ABBA_processing_GUI_doone()
       Process_acronyms_list(acros, dataset_acros_left, dataset_waves_left, total_density_left, atlas_acros, atlas_names,  1 , res_dens_left)
       Process_acronyms_list($(res_dens_left+"_acros"), dataset_acros_right, dataset_waves_right, total_density_right, atlas_acros, atlas_names,  0 , res_dens_right)
       MakeBarGraph($(res_dens_left+"_sortvals"), $(res_dens_right+"_sortvals"), $(res_dens_left+"_labels"), $(res_dens_left+"_label_locs"),dataset_ID+"_"+brain_area+"_tot_dens","total density of detections (mm\\S-2\\M)")
+      
+      DoWindow/F $lay_dens
+     
+      if (lay_dens_existed)
+        LayoutPageAction appendPage
+      endif
+      
+       AppendLayoutObject/F=0/T=1/R=(45,78,570,540) Graph $(dataset_ID+"_"+brain_area+"_tot_dens")
+	   SetDrawLayer UserFront
+	   SetDrawEnv fsize= 14
+	   DrawText 29.25,60.75,"Data for "+ dataset_ID
+	   SetDrawEnv fsize= 14
+	   DrawText 167.25,75, brain_area+" areas: total density of detections"
+      
+      lay_dens_existed=1
+      
       
       Duplicate/O $(res_dens_left+"_wavelist") $(res_densAP_left+"_wavelist")
       Duplicate/O $(res_dens_right+"_wavelist") $(res_densAP_right+"_wavelist")
@@ -245,7 +294,14 @@ Function ABBA_processing_GUI_doone()
       MakeAPGraph_uniqueAPs(acros, densAP_left, min(plot_N,numpnts(densAP_left)),dataset_ID+"_"+brain_area+"_AP_left_dens","density of detections (mm\\S-2\\M)", "(65535,0,0)")
       plotN=min(plot_N,numpnts(densAP_left))
       MakeAPGraph_uniqueAPs(acros, densAP_right, min(plot_N,numpnts(densAP_right)),dataset_ID+"_"+brain_area+"_AP_right_dens","density of detections (mm\\S-2\\M)", "(0,0,65535)")
-
+      
+      DoWindow/F $lay_dens
+      AppendLayoutObject/F=0/T=1/R=(42,587,288,770) Graph $(dataset_ID+"_"+brain_area+"_AP_left_dens")
+	   AppendLayoutObject/F=0/T=1/R=(303,583,564,771) Graph $(dataset_ID+"_"+brain_area+"_AP_right_dens")
+	   SetDrawLayer UserFront
+      SetDrawEnv fsize= 14
+	   DrawText 84,582, brain_area+" areas: spatial distribution of the density of detections" 
+          
 
        //detections
        
@@ -253,6 +309,23 @@ Function ABBA_processing_GUI_doone()
       Process_acronyms_list(acros, dataset_acros_left, dataset_waves_left, total_detections_left, atlas_acros, atlas_names,  1 , res_dets_left)
       Process_acronyms_list($(res_dets_left+"_acros"), dataset_acros_right, dataset_waves_right, total_detections_right, atlas_acros, atlas_names,  0 , res_dets_right)
       MakeBarGraph($(res_dets_left+"_sortvals"), $(res_dets_right+"_sortvals"), $(res_dets_left+"_labels"), $(res_dets_left+"_label_locs"),dataset_ID+"_"+brain_area+"_tot_dets","total number of detections")
+     
+       DoWindow/F $lay_dets
+     
+       if (lay_dets_existed)
+        LayoutPageAction appendPage
+       endif
+      
+      AppendLayoutObject/F=0/T=1/R=(45,78,570,540) Graph $(dataset_ID+"_"+brain_area+"_tot_dets")
+	   SetDrawLayer UserFront
+	   SetDrawEnv fsize= 14
+	   DrawText 29.25,60.75,"Data for "+ dataset_ID
+	   SetDrawEnv fsize= 14
+	   DrawText 167.25,75, brain_area+" areas: total number of detections"
+      
+      lay_dets_existed=1
+     
+          
       
       Duplicate/O $(res_dets_left+"_wavelist") $(res_detsAP_left+"_wavelist")
       Duplicate/O $(res_dets_right+"_wavelist") $(res_detsAP_right+"_wavelist")
@@ -264,6 +337,13 @@ Function ABBA_processing_GUI_doone()
       plotN=min(plot_N,numpnts(detsAP_left))
       MakeAPGraph_uniqueAPs(acros, detsAP_right, min(plot_N,numpnts(detsAP_right)),dataset_ID+"_"+brain_area+"_AP_right_dets","number of detections", "(0,0,65535)")
 
+      
+      DoWindow/F $lay_dets
+      AppendLayoutObject/F=0/T=1/R=(42,587,288,770) Graph $(dataset_ID+"_"+brain_area+"_AP_left_dets")
+	   AppendLayoutObject/F=0/T=1/R=(303,583,564,771) Graph $(dataset_ID+"_"+brain_area+"_AP_right_dets")
+	   SetDrawLayer UserFront
+      SetDrawEnv fsize= 14
+	   DrawText 84,582, brain_area+" areas: spatial distribution of the detections" 
        
        
 
@@ -276,6 +356,22 @@ Function ABBA_processing_GUI_doone()
       Process_acronyms_list($(res_dens_right+"_acros"), dataset_acros_left, dataset_waves_left, total_density_left, atlas_acros, atlas_names,  0 , res_dens_left)
       MakeBarGraph($(res_dens_left+"_sortvals"), $(res_dens_right+"_sortvals"), $(res_dens_right+"_labels"), $(res_dens_right+"_label_locs"),dataset_ID+"_"+brain_area+"_tot_dens","total density of detections (mm\\S-2\\M)")
       
+       DoWindow/F $lay_dens
+     
+      if (lay_dens_existed)
+        LayoutPageAction appendPage
+      endif
+      
+       AppendLayoutObject/F=0/T=1/R=(45,78,570,540) Graph $(dataset_ID+"_"+brain_area+"_tot_dens")
+	   SetDrawLayer UserFront
+	   SetDrawEnv fsize= 14
+	   DrawText 29.25,60.75,"Data for "+ dataset_ID
+	   SetDrawEnv fsize= 14
+	   DrawText 167.25,75, brain_area+" areas: total density of detections"
+      
+      lay_dens_existed=1
+      
+      
       Duplicate/O $(res_dens_left+"_wavelist") $(res_densAP_left+"_wavelist")
       Duplicate/O $(res_dens_right+"_wavelist") $(res_densAP_right+"_wavelist")
       Wave/T densAP_left=$(res_densAP_left+"_wavelist"), densAP_right=$(res_densAP_right+"_wavelist") 
@@ -286,12 +382,41 @@ Function ABBA_processing_GUI_doone()
       MakeAPGraph_uniqueAPs(acros, densAP_right, min(plot_N,numpnts(densAP_right)),dataset_ID+"_"+brain_area+"_AP_right_dens","density of detections (mm\\S-2\\M)", "(0,0,65535)")
       plotN=min(plot_N,numpnts(densAP_right))
 
+   
+      DoWindow/F $lay_dens
+      AppendLayoutObject/F=0/T=1/R=(42,587,288,770) Graph $(dataset_ID+"_"+brain_area+"_AP_left_dens")
+	   AppendLayoutObject/F=0/T=1/R=(303,583,564,771) Graph $(dataset_ID+"_"+brain_area+"_AP_right_dens")
+	   SetDrawLayer UserFront
+      SetDrawEnv fsize= 14
+	   DrawText 84,582, brain_area+" areas: spatial distribution of the density of detections" 
+          
+
+
+
+
        //detections
        
        
       Process_acronyms_list(acros, dataset_acros_right, dataset_waves_right, total_detections_right, atlas_acros, atlas_names,  1 , res_dets_right)
       Process_acronyms_list($(res_dets_right+"_acros"), dataset_acros_left, dataset_waves_left, total_detections_left, atlas_acros, atlas_names,  0 , res_dets_left)
       MakeBarGraph($(res_dets_left+"_sortvals"), $(res_dets_right+"_sortvals"), $(res_dets_right+"_labels"), $(res_dets_right+"_label_locs"),dataset_ID+"_"+brain_area+"_tot_dets","total number of detections")
+     
+       DoWindow/F $lay_dets
+     
+       if (lay_dets_existed)
+        LayoutPageAction appendPage
+       endif
+      
+      AppendLayoutObject/F=0/T=1/R=(45,78,570,540) Graph $(dataset_ID+"_"+brain_area+"_tot_dets")
+	   SetDrawLayer UserFront
+	   SetDrawEnv fsize= 14
+	   DrawText 29.25,60.75,"Data for "+ dataset_ID
+	   SetDrawEnv fsize= 14
+	   DrawText 167.25,75, brain_area+" areas: total number of detections"
+      
+      lay_dets_existed=1
+     
+     
       
       Duplicate/O $(res_dets_left+"_wavelist") $(res_detsAP_left+"_wavelist")
       Duplicate/O $(res_dets_right+"_wavelist") $(res_detsAP_right+"_wavelist")
@@ -302,6 +427,17 @@ Function ABBA_processing_GUI_doone()
       MakeAPGraph_uniqueAPs(acros, detsAP_left, min(plot_N,numpnts(detsAP_left)),dataset_ID+"_"+brain_area+"_AP_left_dets","number of detections", "(65535,0,0)")
       plotN=min(plot_N,numpnts(detsAP_left))
       MakeAPGraph_uniqueAPs(acros, detsAP_right, min(plot_N,numpnts(detsAP_right)),dataset_ID+"_"+brain_area+"_AP_right_dets","number of detections", "(0,0,65535)")
+
+      
+      DoWindow/F $lay_dets
+      AppendLayoutObject/F=0/T=1/R=(42,587,288,770) Graph $(dataset_ID+"_"+brain_area+"_AP_left_dets")
+	   AppendLayoutObject/F=0/T=1/R=(303,583,564,771) Graph $(dataset_ID+"_"+brain_area+"_AP_right_dets")
+	   SetDrawLayer UserFront
+      SetDrawEnv fsize= 14
+	   DrawText 84,582, brain_area+" areas: spatial distribution of the detections" 
+       
+
+
 
 	  endif
      
@@ -380,6 +516,15 @@ Function ABBA_processing_GUI_domany()
 	  SVAR avprefix=gAvPrefix
 	endif
  
+ String LayoutsAverage
+ 
+ SVAR Layouts_Average=gLayoutsAverage
+  if(SVAR_Exists(Layouts_Average)!=1)
+	  String/G gLayoutsAverage="LayoutAverages_dens;LayoutAverages_dets"
+	  SVAR Layouts_Average=gLayoutsAverage
+   endif
+ 
+ LayoutsAverage=Layouts_Average
  
  
  String sort_By=sortBy, sortBy_list="left;right", av_prefix=avprefix, dataset_ID
@@ -393,8 +538,9 @@ Function ABBA_processing_GUI_domany()
    Prompt av_prefix, "Set a prefix for the new (average) dataset"
    Prompt sort_By, "Master sorting by which side?", popup, sortBy_list
    Prompt plot_N, "How many of the top AP-traces to plot?"
+   Prompt LayoutsAverage, "Layout windows for appending the respective results (density;detections)"
 	
-   DoPrompt "Set analysis parameters", dataset_IDlist, brain_area, av_prefix, sort_By, plot_N
+   DoPrompt "Set analysis parameters", dataset_IDlist, brain_area, av_prefix, sort_By, plot_N, LayoutsAverage
 	
    cancel_flag=V_flag
    
@@ -405,6 +551,13 @@ Function ABBA_processing_GUI_domany()
      datasetIDlist=dataset_IDlist
      plotN=plot_N
      avprefix=av_prefix
+     Layouts_Average=LayoutsAverage
+     
+     String lay_dens=StringFromList(0, LayoutsAverage,";"), lay_dets=StringFromList(1, LayoutsAverage,";")
+     String populate_layout, graphs_left, graphs_right
+     Variable i, lay_dens_existed=1, lay_dets_existed=1
+     
+     
      
      dataset_ID=av_prefix+"_"+brain_area
      
@@ -440,9 +593,22 @@ Function ABBA_processing_GUI_domany()
 	  String res_dets_right="root:"+dataset_ID+":res:dets_right_"+brain_area
 	  String res_detsAP_left="root:"+dataset_ID+":res:detsAP_left_"+brain_area
 	  String res_detsAP_right="root:"+dataset_ID+":res:detsAP_right_"+brain_area
+	   
      
+          
+     if (strlen(WinList(lay_dens, ";", "WIN:4"))==0)
+      NewLayout as "Average density across experiments"
+      DoWindow/C $lay_dens
+      lay_dens_existed=0
+     endif
      
-   
+     if (strlen(WinList(lay_dets, ";", "WIN:4"))==0)
+      NewLayout as "Average number of detections across experiments"
+      DoWindow/C $lay_dets
+      lay_dets_existed=0
+     endif
+  
+        
      if (CmpStr(sort_By,"left")==0) //master sort by the left side
  
       //density
@@ -451,16 +617,50 @@ Function ABBA_processing_GUI_domany()
       Process_acronyms_list($(res_dens_left+"_acros"), dataset_acros_right, dataset_waves_right, total_density_right, atlas_acros, atlas_names,  0 , res_dens_right)
       MakeBarGraph_average($(res_dens_left+"_sortvals"), $(res_dens_right+"_sortvals"), $(res_dens_left+"_labels"), $(res_dens_left+"_label_locs"),dataset_ID+"_tot_dens","total density of detections (mm\\S-2\\M)")
       
+      
+      DoWindow/F $lay_dens
+     
+      if (lay_dens_existed)
+        LayoutPageAction appendPage
+      endif
+      
+      AppendLayoutObject/F=0/T=1/R=(60,133,531,625) Graph $(dataset_ID+"_tot_dens")
+	   SetDrawLayer UserFront
+	   SetDrawEnv fsize= 14
+	   DrawText 29.25,60.75,"AVERAGE of "+dataset_IDlist
+	   SetDrawEnv fsize= 14
+	   DrawText 150.75,108, brain_area+" areas: total density of detections"
+      
+      lay_dens_existed=1
+      
+         
+      
       Duplicate/O $(res_dens_left+"_wavelist") $(res_densAP_left+"_wavelist")
       Duplicate/O $(res_dens_right+"_wavelist") $(res_densAP_right+"_wavelist")
       Wave/T densAP_left=$(res_densAP_left+"_wavelist"), densAP_right=$(res_densAP_right+"_wavelist") 
       densAP_left=ReplaceString("total_density", densAP_left[p], "density")
       densAP_right=ReplaceString("total_density", densAP_right[p], "density")
       
-      MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_left, min(plot_N,numpnts(densAP_left)),dataset_ID+"_AP_left_dens",1,"density of detections (mm\\S-2\\M)", "(65535,0,0)")
+      graphs_left=MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_left, min(plot_N,numpnts(densAP_left)),dataset_ID+"_AP_left_dens",1,"density of detections (mm\\S-2\\M)", "(65535,0,0)")
       plotN=min(plot_N,numpnts(densAP_left))
-      MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_right, min(plot_N,numpnts(densAP_right)),dataset_ID+"_AP_right_dens",1,"density of detections (mm\\S-2\\M)", "(0,0,65535)")
+      graphs_right=MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_right, min(plot_N,numpnts(densAP_right)),dataset_ID+"_AP_right_dens",1,"density of detections (mm\\S-2\\M)", "(0,0,65535)")
 
+      
+      DoWindow/F $lay_dens
+      LayoutPageAction appendPage
+           
+      for(i=0; i<ItemsInList(graphs_left,";"); i+=1)
+       AppendLayoutObject/T=1/F=0 Graph $(StringFromList(i, graphs_left, ";"))
+       AppendLayoutObject/T=1/F=0 Graph $(StringFromList(i, graphs_right, ";"))
+      endfor
+      
+      Execute "Tile/O=1"
+            
+      SetDrawEnv fsize= 14
+	   DrawText 141.75,762.75, brain_area+" areas: total density of detections"   
+      
+      
+      
        //detections
        
        
@@ -468,17 +668,45 @@ Function ABBA_processing_GUI_domany()
       Process_acronyms_list($(res_dets_left+"_acros"), dataset_acros_right, dataset_waves_right, total_detections_right, atlas_acros, atlas_names,  0 , res_dets_right)
       MakeBarGraph_average($(res_dets_left+"_sortvals"), $(res_dets_right+"_sortvals"), $(res_dets_left+"_labels"), $(res_dets_left+"_label_locs"),dataset_ID+"_tot_dets","total number of detections")
       
+      DoWindow/F $lay_dets
+     
+      if (lay_dets_existed)
+        LayoutPageAction appendPage
+      endif
+      
+      AppendLayoutObject/F=0/T=1/R=(60,133,531,625) Graph $(dataset_ID+"_tot_dets")
+	   SetDrawLayer UserFront
+	   SetDrawEnv fsize= 14
+	   DrawText 29.25,60.75,"AVERAGE of "+dataset_IDlist
+	   SetDrawEnv fsize= 14
+	   DrawText 150.75,108, brain_area+" areas: total detections"
+      
+      lay_dets_existed=1
+      
+      
       Duplicate/O $(res_dets_left+"_wavelist") $(res_detsAP_left+"_wavelist")
       Duplicate/O $(res_dets_right+"_wavelist") $(res_detsAP_right+"_wavelist")
       Wave/T detsAP_left=$(res_detsAP_left+"_wavelist"), detsAP_right=$(res_detsAP_right+"_wavelist") 
       detsAP_left=ReplaceString("total_detections", detsAP_left[p], "detections")
       detsAP_right=ReplaceString("total_detections", detsAP_right[p], "detections")
       
-      MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_left, min(plot_N,numpnts(detsAP_left)),dataset_ID+"_AP_left_dets",1,"number of detections", "(65535,0,0)")
+      graphs_left=MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_left, min(plot_N,numpnts(detsAP_left)),dataset_ID+"_AP_left_dets",1,"number of detections", "(65535,0,0)")
       plotN=min(plot_N,numpnts(detsAP_left))
-      MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_right, min(plot_N,numpnts(detsAP_right)),dataset_ID+"_AP_right_dets",1,"number of detections", "(0,0,65535)")
+      graphs_right=MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_right, min(plot_N,numpnts(detsAP_right)),dataset_ID+"_AP_right_dets",1,"number of detections", "(0,0,65535)")
 
-       
+      
+      DoWindow/F $lay_dets
+      LayoutPageAction appendPage
+           
+      for(i=0; i<ItemsInList(graphs_left,";"); i+=1)
+       AppendLayoutObject/T=1/F=0 Graph $(StringFromList(i, graphs_left, ";"))
+       AppendLayoutObject/T=1/F=0 Graph $(StringFromList(i, graphs_right, ";"))
+      endfor
+      
+      Execute "Tile/O=1"
+            
+      SetDrawEnv fsize= 14
+	   DrawText 141.75,762.75, brain_area+" areas: total detections"  
        
 
      else //master sort by the right side
@@ -490,15 +718,51 @@ Function ABBA_processing_GUI_domany()
       Process_acronyms_list($(res_dens_right+"_acros"), dataset_acros_left, dataset_waves_left, total_density_left, atlas_acros, atlas_names,  0 , res_dens_left)
       MakeBarGraph_average($(res_dens_left+"_sortvals"), $(res_dens_right+"_sortvals"), $(res_dens_right+"_labels"), $(res_dens_right+"_label_locs"),dataset_ID+"_tot_dens","total density of detections (mm\\S-2\\M)")
       
+      
+       DoWindow/F $lay_dens
+     
+      if (lay_dens_existed)
+        LayoutPageAction appendPage
+      endif
+      
+      AppendLayoutObject/F=0/T=1/R=(60,133,531,625) Graph $(dataset_ID+"_tot_dens")
+	   SetDrawLayer UserFront
+	   SetDrawEnv fsize= 14
+	   DrawText 29.25,60.75,"AVERAGE of "+dataset_IDlist
+	   SetDrawEnv fsize= 14
+	   DrawText 150.75,108, brain_area+" areas: total density of detections"
+      
+      lay_dens_existed=1
+      
+      
+      
       Duplicate/O $(res_dens_left+"_wavelist") $(res_densAP_left+"_wavelist")
       Duplicate/O $(res_dens_right+"_wavelist") $(res_densAP_right+"_wavelist")
       Wave/T densAP_left=$(res_densAP_left+"_wavelist"), densAP_right=$(res_densAP_right+"_wavelist") 
       densAP_left=ReplaceString("total_density", densAP_left[p], "density")
       densAP_right=ReplaceString("total_density", densAP_right[p], "density")
       
-      MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_left, min(plot_N,numpnts(densAP_left)),dataset_ID+"_AP_left_dens",1, "density of detections (mm\\S-2\\M)", "(65535,0,0)")
-      MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_right, min(plot_N,numpnts(densAP_right)),dataset_ID+"_AP_right_dens",1, "density of detections (mm\\S-2\\M)", "(0,0,65535)")
+      graphs_left=MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_left, min(plot_N,numpnts(densAP_left)),dataset_ID+"_AP_left_dens",1, "density of detections (mm\\S-2\\M)", "(65535,0,0)")
+      graphs_right=MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_right, min(plot_N,numpnts(densAP_right)),dataset_ID+"_AP_right_dens",1, "density of detections (mm\\S-2\\M)", "(0,0,65535)")
       plotN=min(plot_N,numpnts(densAP_right))
+      
+      
+      DoWindow/F $lay_dens
+      LayoutPageAction appendPage
+     
+      
+      for(i=0; i<ItemsInList(graphs_left,";"); i+=1)
+       AppendLayoutObject/T=1/F=0 Graph $(StringFromList(i, graphs_left, ";"))
+       AppendLayoutObject/T=1/F=0 Graph $(StringFromList(i, graphs_right, ";"))
+      endfor
+      
+      Execute "Tile/O=1"
+            
+      SetDrawEnv fsize= 14
+	   DrawText 141.75,762.75, brain_area+" areas: total density of detections"  
+      
+      
+      
 
        //detections
        
@@ -506,6 +770,24 @@ Function ABBA_processing_GUI_domany()
       Process_acronyms_list(acros, dataset_acros_right, dataset_waves_right, total_detections_right, atlas_acros, atlas_names,  1 , res_dets_right)
       Process_acronyms_list($(res_dets_right+"_acros"), dataset_acros_left, dataset_waves_left, total_detections_left, atlas_acros, atlas_names,  0 , res_dets_left)
       MakeBarGraph_average($(res_dets_left+"_sortvals"), $(res_dets_right+"_sortvals"), $(res_dets_right+"_labels"), $(res_dets_right+"_label_locs"),dataset_ID+"_tot_dets","total number of detections")
+     
+      
+       DoWindow/F $lay_dets
+     
+      if (lay_dets_existed)
+        LayoutPageAction appendPage
+      endif
+      
+      AppendLayoutObject/F=0/T=1/R=(60,133,531,625) Graph $(dataset_ID+"_tot_dets")
+	   SetDrawLayer UserFront
+	   SetDrawEnv fsize= 14
+	   DrawText 29.25,60.75,"AVERAGE of "+dataset_IDlist
+	   SetDrawEnv fsize= 14
+	   DrawText 150.75,108, brain_area+" areas: total detections"
+      
+      lay_dets_existed=1
+      
+      
       
       Duplicate/O $(res_dets_left+"_wavelist") $(res_detsAP_left+"_wavelist")
       Duplicate/O $(res_dets_right+"_wavelist") $(res_detsAP_right+"_wavelist")
@@ -513,9 +795,28 @@ Function ABBA_processing_GUI_domany()
       detsAP_left=ReplaceString("total_detections", detsAP_left[p], "detections")
       detsAP_right=ReplaceString("total_detections", detsAP_right[p], "detections")
       
-      MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_left, min(plot_N,numpnts(detsAP_left)),dataset_ID+"_AP_left_dets",1,"number of detections", "(65535,0,0)")
+      graphs_left=MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_left, min(plot_N,numpnts(detsAP_left)),dataset_ID+"_AP_left_dets",1,"number of detections", "(65535,0,0)")
       plotN=min(plot_N,numpnts(detsAP_left))
-      MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_right, min(plot_N,numpnts(detsAP_right)),dataset_ID+"_AP_right_dets",1,"number of detections", "(0,0,65535)")
+      graphs_right=MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_right, min(plot_N,numpnts(detsAP_right)),dataset_ID+"_AP_right_dets",1,"number of detections", "(0,0,65535)")
+
+
+
+
+      DoWindow/F $lay_dets
+      LayoutPageAction appendPage
+            
+      for(i=0; i<ItemsInList(graphs_left,";"); i+=1)
+       AppendLayoutObject/T=1/F=0 Graph $(StringFromList(i, graphs_left, ";"))
+       AppendLayoutObject/T=1/F=0 Graph $(StringFromList(i, graphs_right, ";"))
+      endfor
+      
+      Execute "Tile/O=1"
+            
+      SetDrawEnv fsize= 14
+	   DrawText 141.75,762.75, brain_area+" areas: total detections"  
+
+
+
 
 	  endif
      
@@ -1361,7 +1662,7 @@ Function MakeAPGraph_uniqueAPs(acronym_lookup, w_data, top_n, res_win, axis_name
 End
 
 
-Function MakeAPGraph_averageAPs(acronym_lookup, mouse_list, w_data, top_n, res_win, AP_mode, axis_name, color)
+Function/T MakeAPGraph_averageAPs(acronym_lookup, mouse_list, w_data, top_n, res_win, AP_mode, axis_name, color)
  Wave/T acronym_lookup //text wave with the list of acronyms as in atlas.
  //needed to be supplied because of "non-liberal" wave naming of the data which replaced symbols like "/" or "-" in the acronyms with "_"  
  String mouse_list// , - separate list of folders with individual datasets
@@ -1372,6 +1673,8 @@ Function MakeAPGraph_averageAPs(acronym_lookup, mouse_list, w_data, top_n, res_w
  Variable AP_mode //if 0, then the centers of AP histogram bins will be used; if non-zero, then average AP coordinates will be used for X-axis  
  String axis_name //legend for X-axis
  String color
+ 
+ String return_str=""
  
  Variable i, j, M=numpnts(acronym_lookup), match, N=ItemsInList(mouse_list, ";"), acro_n
  String path_to, s, acro, mouse, current, s1, s2
@@ -1388,7 +1691,7 @@ Function MakeAPGraph_averageAPs(acronym_lookup, mouse_list, w_data, top_n, res_w
   while (match && acro_n<M-1)
    if (acro_n==M-1 && match)
      printf "Did not find a matching acronym for the data wave %s! Please check the list of acronyms. For now, aborted.\r", w_data[i]
-     return -1
+     return ";"
    endif
   
   if (AP_mode)  
@@ -1408,14 +1711,18 @@ Function MakeAPGraph_averageAPs(acronym_lookup, mouse_list, w_data, top_n, res_w
   Display dat vs w_AP
   DoWindow/C $(res_win+acro)
   
+  return_str=return_str+res_win+acro+";"
+  
   //adding individual waves
     for(j=0; j<N; j+=1) //over mice
      mouse=StringFromList(j,mouse_list,";")
      Wave dat_jj=$(ReplaceString(current, w_data[i], mouse))
-     s=GetWavesDataFolder(dat_jj, 1)
-     Wave dat_j=$(s+"dropped_nan:"+NameOfWave(dat_jj))
-     Wave w_AP_j=$(ReplaceString(current, path_to, mouse)+"'"+acronym_lookup[acro_n]+"_AP_coord'")
-     AppendToGraph dat_j vs w_AP_j
+     if (WaveExists(dat_jj))
+       s=GetWavesDataFolder(dat_jj, 1)
+       Wave dat_j=$(s+"dropped_nan:"+NameOfWave(dat_jj))
+       Wave w_AP_j=$(ReplaceString(current, path_to, mouse)+"'"+acronym_lookup[acro_n]+"_AP_coord'")
+       AppendToGraph dat_j vs w_AP_j
+     endif
     endfor //over mice
     
    ModifyGraph mode=4,marker=8,rgb=(26214,26214,26214)
@@ -1441,7 +1748,7 @@ Function MakeAPGraph_averageAPs(acronym_lookup, mouse_list, w_data, top_n, res_w
   
   printf "//Plotted %d graphs.\n", top_n
   
-  return top_n
+  return return_str
 
 End
 
