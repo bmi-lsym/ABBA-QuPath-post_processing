@@ -1924,9 +1924,12 @@ Function do_average_APtraces(mouse_list, acronyms, subfolder)
     
     
    Make/O/N=(N_histo) $"root:tmp_histo"
+   Make/O/N=(N_histo+1) $"root:tmp_histo_borders"
    Wave histo_AP=$"root:tmp_histo"
+   Wave histo_AP_borders=$"root:tmp_histo_borders"
    histo_step=(max_histo-min_histo)/(N_histo-1)
    histo_AP=min_histo+p*histo_step
+   histo_AP_borders=min_histo+histo_step*(p-0.5)
      
    Make/O/N=(N_histo)/D $"root:tmp_averaging",$"root:tmp_sem",$"root:tmp_AP_aver",$"root:tmp_AP_sem", $"root:tmp_Ns"  
    Wave/D aver=$"root:tmp_averaging",sem=$"root:tmp_sem",AP_sem=$"root:tmp_AP_sem",AP_aver=$"root:tmp_AP_aver", N_wav=$"root:tmp_Ns"  
@@ -1953,7 +1956,7 @@ Function do_average_APtraces(mouse_list, acronyms, subfolder)
      cntr=-1
      do
       cntr+=1
-     while (dat_AP[k]<histo_AP[cntr]-histo_step*0.5 || dat_AP[k]>histo_AP[cntr]+histo_step*0.5)
+     while (dat_AP[k]<=histo_AP_borders[cntr] || dat_AP[k]>histo_AP_borders[cntr+1])
       aver[cntr]+=dat[k]
       sem[cntr]+=dat[k]^2
       AP_aver[cntr]+=dat_AP[k]
@@ -1985,7 +1988,7 @@ Function do_average_APtraces(mouse_list, acronyms, subfolder)
    
  endfor //over acronyms
   
- KillWaves/Z aver, sem, N_wav, AP_aver, AP_sem, histo_AP, max_AP, min_AP, N_AP
+ KillWaves/Z aver, sem, N_wav, AP_aver, AP_sem, histo_AP, histo_AP_borders, max_AP, min_AP, N_AP
  
  SetDataFolder saveDFR
  
