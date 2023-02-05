@@ -86,7 +86,8 @@ def expand_tree_df(input_df, cols_to_keep):
 #selected original data columns listed in 'cols_to_keep' are inherited from original dataframe along with some essential columns
     keepdata={}
     to_keep=["ori_index","AP_coord mm","Root_Atlas_AP","ROI_Atlas_AP", "Tree_level", "Term_leaf", "Name", "Class", "ID"]
-    to_keep.extend(cols_to_keep)
+    #to_keep.extend(cols_to_keep)
+    to_keep+=cols_to_keep
     
     col_cntr=len(to_keep)
     
@@ -114,17 +115,20 @@ def expand_tree_df(input_df, cols_to_keep):
 
 
 
-def flatten_df_by_Name(df):
+def flatten_df_by_Name(df, classes_list):
 #the function takes as an input a dataframe compiled out of the joined per-slice dataframes
 # and "collates" by the names of individual anatomical structures, summing up the number of detections
 # per each structure, and re-calculates the density based on the summed area
 # Original index and AP positions collated for each structure are stored as comma-separated strings in the output dataframe
     struc=df["Name"].unique()
+    cls=len(classes_list)
     for i in range(len(struc)):
         if i==0:
             d = {'ori_index': "", 'Image': "", 'AP_coord mm': "" , 'Root_Atlas_AP': "", 'ROI_Atlas_AP': ""}
             d.update({"Name": "","Class": "","Parent": "","ID": "","Parent ID": "",})
-            d.update({"Num Detections": 1.0,"Area µm^2": 1.0, "Left_side": False, "Detection_Density": 1.0})
+            d.update({"Num Detections": 1.0,"Area µm^2": 1.0, "Left_side": False, "Density_Detections": 1.0})
+            for j in range(cls):
+                d.update({"Num "+classes_list[j]: 1.0,"Density_"+classes_list[j]: 1.0})
             df_collated=pd.DataFrame(data=d, index={0})
         
         df_c=df.where(df["Name"]==struc[i]).dropna(axis=0, how='all')
@@ -144,6 +148,8 @@ def flatten_df_by_Name(df):
         df_collated.at[i,"ROI_Atlas_AP"]=ROI_AP_list
         df_collated.at[i,"Image"]=image_list
         df_collated.at[i,"Num Detections"]=df_c["Num Detections"].sum()
+        for j in range(cls):
+            df_collated.at[i,"Num "+classes_list[j]]=df_c["Num "+classes_list[j]].sum()
         df_collated.at[i,"Area µm^2"]=df_c["Area µm^2"].sum()
         df_collated.at[i,"Name"]=struc[i] #df_c["Name"].iloc[0]
         df_collated.at[i,"Class"]=df_c["Class"].iloc[0]
@@ -155,58 +161,14 @@ def flatten_df_by_Name(df):
         if check.sum() != 3:
             print(" -> Warning!!! Parents or (Parent) IDs for the structure", "\'"+df_c["Name"].iloc[0]+"\'","(index list:",index_list+")","seem to be different!")
         
-    df_collated["Detection_Density"]=df_collated["Num Detections"]/df_collated["Area µm^2"]*1e6
+    df_collated["Density_Detections"]=df_collated["Num Detections"]/df_collated["Area µm^2"]*1e6
+    
+    for j in range(cls):
+        df_collated["Density_"+classes_list[j]]=df_collated["Num "+classes_list[j]]/df_collated["Area µm^2"]*1e6
+        
+        
     return df_collated
 
-
-
-def generate_AP_traces(tree_df, ori_df, column, AP_values, mode, lst):
-    #tree_df - dataframe containing the collated tree
-    #ori_df - uncollated dataframe over multiple slices which was used as a source for creating the collated tree
-    #column - name of the column with values to be sampled over AP axis
-    #AP_values - name of the column with the AP coordinate values to take
-    #mode: if 1, then the AP graphs will be generated only for the terminal leaves of the tree
-    #      if 2, then for ALL the entries in the dataframe (every row)
-    #      if 3, then for the structures whose acronyms ("Class") are listed in the list 'lst'
-    #      if 4, then for the structures whose IDs ("ID") are listed in the list 'lst'
-    #      if <=0, then for the entries of hierarchical level equal to (-1)*mode
-    #lst: list with the values, only taken into account when mode=3 or mode=4
-    if mode<=0:
-        df_masked=tree_df.where(tree_df["Tree_level"] == -mode).dropna(axis=0, how='all')
-    elif mode==1:
-        df_masked=tree_df.where(tree_df["Term_leaf"] == True).dropna(axis=0, how='all')
-    elif mode==3:
-        df_masked=pd.concat([tree_df.where(tree_df["Class"]==element).dropna(axis=0, how='all') for element in lst],ignore_index=True,sort=False)
-    elif mode==4:
-        df_masked=pd.concat([tree_df.where(tree_df["ID"]==element).dropna(axis=0, how='all') for element in lst],ignore_index=True,sort=False)
-    elif mode==2:
-        df_masked=tree_df.dropna(axis=0, how='all')
-    
-    AP_coords = ori_df[AP_values].unique()
-    idx = np.arange(len(AP_coords))
-    nans = np.zeros(len(AP_coords))
-    nans = np.nan
-    d = {AP_values: AP_coords}
-    for i in range(df_masked.shape[0]):
-        s=df_masked["Class"].iloc[i]+";"+df_masked["Name"].iloc[i]
-        bla = {s: nans}
-        d.update(bla)
-        
-    df_AP_graphs=pd.DataFrame(data=d, index=idx)
-    
-    for i in range(df_masked.shape[0]):
-        AP_lst=[float(element) for element in df_masked[AP_values].iloc[i].split(",")]
-        idx_lst=[int(element) for element in df_masked["ori_index"].iloc[i].split(",")]
-        for j in range(len(AP_coords)):
-            if AP_coords[j] in AP_lst:
-                k=ori_df.index[ori_df["ori_index"] == idx_lst[AP_lst.index(AP_coords[j])]].tolist()
-                df_AP_graphs.iloc[j, i+1]=ori_df.loc[k[0],column]
-                if len(k)>1:
-                    print(" -> Warning!!! Seems like there are multiple identical indices in the original dataframe.")
-                
-            
-            
-    return df_AP_graphs
 
 
 def swap_subtrees(df, df_tree, idx):
@@ -297,9 +259,8 @@ def sum_up_rows(df):
 
 def import_QuPath_annotations_java(image):
 
-    col_names=['Image','Name','Class','Parent','ROI','Centroid X µm','Centroid Y µm','ID','Parent ID','Side','Num Detections','Area µm^2','Perimeter µm',"Atlas_X", "Atlas_Y", "Atlas_Z"]
-    dets_col_names=["Image","Centroid X µm","Centroid Y µm","Nucleus: Area","Nucleus: Perimeter","Nucleus: Circularity","Atlas_X", "Atlas_Y", "Atlas_Z"]
-
+    #col_names=['Image','Name','Class','Parent','ROI','Centroid X µm','Centroid Y µm','ID','Parent ID','Side','Num Detections','Area µm^2','Perimeter µm',"Atlas_X", "Atlas_Y", "Atlas_Z"]
+    
     # We need the ImageData and the Annotations we want the results from 
     imagedata = image.java_object.readImageData()
     objects = imagedata.getHierarchy().getAnnotationObjects()
@@ -309,6 +270,12 @@ def import_QuPath_annotations_java(image):
     ob = ObservableMeasurementTableData()
     #This line creates all the measurements
     ob.setImageData(imagedata , objects)
+    
+    col_names=[]
+    for i in range(len(ob.getAllNames())):
+        col_names.append(ob.getAllNames()[i])
+        
+    channels_list=[s.replace("Num ","") for s in col_names if "Num " in s and s != "Num Detections"]    
     
     N_ans=len(objects)
 
@@ -323,6 +290,13 @@ def import_QuPath_annotations_java(image):
     objects_det = imagedata.getHierarchy().getDetectionObjects()
     ob_det = ObservableMeasurementTableData()
     ob_det.setImageData(imagedata , objects_det)
+    
+    dets_col_names=["Image", "Class", "Centroid X µm","Centroid Y µm","Nucleus: Area","Nucleus: Perimeter","Nucleus: Circularity","Atlas_X", "Atlas_Y", "Atlas_Z"]
+    
+    #append the columns with the data on mean cell intensity
+    for i in range(len(ob_det.getAllNames())):
+        if ("Cell:" in ob_det.getAllNames()[i] and "mean" in ob_det.getAllNames()[i]):
+            dets_col_names.append(ob_det.getAllNames()[i])
    
     N_dets=len(objects_det)
     dets_data=np.empty((N_dets,len(dets_col_names)),dtype="U256")
@@ -336,8 +310,7 @@ def import_QuPath_annotations_java(image):
     dets_df=pd.DataFrame(dets_data, columns=dets_col_names)
 
 
-
-    return anno_df, dets_df
+    return anno_df, dets_df, channels_list
     
     
 def create_subfolders(ABBA_json, path_prefix, path_prefix_results, result_filename):
@@ -439,27 +412,40 @@ def extract_QuPath_data(df_index, path_prefix):
 
     # extracting the anotations measurements data from the QuPath project and saving as individual excel files per each image
     print(" -> Extracting and saving the annotations and detections data from the QuPath project...")
-    print(" ->  (may take a while in case of many detections)\n") 
+    print(" ->  (may take a while in case of many detections)\n")
+    global_classes_list=[]    
     for i in range(len(idx_files_list)):
         image = qp_idx[i].images[qp_image_idx[i]]  # get the image
         pixelWidth=float(image._image_server.getMetadata().getPixelWidthMicrons())
         pixelHeight=float(image._image_server.getMetadata().getPixelHeightMicrons())
         print("     Importing annotations from the image",image.image_name,"(",image.width,"x",image.height,"px /","{:.1f}".format(image.width*pixelWidth),"x","{:.1f}".format(image.height*pixelHeight),"micron)...")
-        print("          It has",len(image.hierarchy.annotations), "annotations and",len(image.hierarchy.detections),"detections")
-        qp_anno_df, qp_dets_df=import_QuPath_annotations_java(image)
+        qp_anno_df, qp_dets_df, channels_list = import_QuPath_annotations_java(image)
+        if (len(channels_list)>0):
+            s_ch=(" in "+str(len(channels_list))+" classes: ")+"".join('"'+str(s)+'",' for s in channels_list)[:-1]
+            classes_list=[str(s) for s in channels_list]
+        else:
+            classes_list=[]
+            s_ch=", unclassified"
+        global_classes_list+=classes_list
+        print("          It has",len(image.hierarchy.annotations), "annotations and",len(image.hierarchy.detections),"detections"+s_ch)
         qp_anno_df.to_csv(path_prefix+idx_files_list[i],index=False)
         qp_dets_df.to_csv(path_prefix+dets_files_list[i],index=False)
         
     print("\n -> Done!") 
     print(" -> Stored",len(idx_files_list),"annotation and",len(idx_files_list),"detection .csv files in the folder", path_prefix)
+    global_classes_list=list(set(global_classes_list))
+    if (len(global_classes_list)>0):
+        s_ch="".join('"'+str(s)+'",' for s in global_classes_list)[:-1]
+        print(" -> Identified",len(global_classes_list),"detection classes:",s_ch)
+    else:
+        print(" -> All detections unclassified")
     
     
-    
-    return idx_files_list, dets_files_list
+    return idx_files_list, dets_files_list, global_classes_list
 
 
 
-def load_csv_data(df_index, swap_pos, path_prefix, path_prefix_results, result_filename, df_atlas):
+def load_csv_data(df_index, swap_pos, classes_list, path_prefix, path_prefix_results, result_filename, df_atlas):
 
     df=pd.DataFrame()
     df_dets=pd.DataFrame()
@@ -509,8 +495,12 @@ def load_csv_data(df_index, swap_pos, path_prefix, path_prefix_results, result_f
                 skip_cntr+=1
             
             
-
+    cls=len(classes_list)
+    
     df["Num Detections"]=df["Num Detections"].fillna(0)
+    
+    for i in range(cls):
+        df["Num "+classes_list[i]]=df["Num "+classes_list[i]].fillna(0)
                 
     print("\n -> Loaded the data, in total",df.shape[0],"data rows in",df.shape[1]-1,"columns from",file_cntr,".csv files, skipped",skip_cntr,"empty file(s).")
     print("\n -> Found in total",total_dets,"detections.")
@@ -523,15 +513,33 @@ def load_csv_data(df_index, swap_pos, path_prefix, path_prefix_results, result_f
     print("\n -> Saved the combined detections into the file","\'"+result_filename+"combined_detections.csv\'")
 
     df_dets[["Atlas_X","Atlas_Y","Atlas_Z"]].to_csv(path_prefix_results+result_filename+"detection_coordinates.csv",index=False)
-    print("\n -> Saved the clean detection coordinates into the file","\'"+result_filename+"detection_coordinates.csv\'")
+    print("\n -> Saved "+str(df_dets.shape[0])+" unclassified detection coordinates into","\'"+result_filename+"detection_coordinates.csv\'")
+    
+    for i in range(cls):
+        san="".join(c.replace(" ", "-") for c in classes_list[i] if c not in "\/:*?<>|")
+        filename=result_filename+"detection_coordinates_"+san+".csv"
+        df_i=df_dets.where(df_dets["Class"]==classes_list[i]).dropna(axis=0, how='all')[["Atlas_X","Atlas_Y","Atlas_Z"]]
+        df_i.to_csv(path_prefix_results+filename,index=False)
+        print("\n -> Saved "+str(df_i.shape[0])+" detection coordinates for the class \""+classes_list[i]+"\" into","\'"+filename+"\'")
+    
     
     return df, df_dets
     
-def process_left_right_trees(df, list_to_keep, path_prefix_results, result_filename):
+def process_left_right_trees(df, classes_list, path_prefix_results, result_filename):
+    
     df["Left_side"]=df["Class"].str.contains("Left")
     df.astype({"Num Detections": 'int64'})
-    df["Detection_Density"]=df["Num Detections"]/df["Area µm^2"]*1e6
-
+    df["Density_Detections"]=df["Num Detections"]/df["Area µm^2"]*1e6
+    list_to_keep=["Num Detections", "Area µm^2", "Density_Detections"]
+        
+    # additional cycling through the classes
+    cls=len(classes_list)
+    for i in range(cls):
+        list_to_keep.append("Num "+classes_list[i])
+        list_to_keep.append("Density_"+classes_list[i])
+        df.astype({"Num "+classes_list[i]: 'int64'})
+        df["Density_"+classes_list[i]]=df["Num "+classes_list[i]]/df["Area µm^2"]*1e6
+    
     print("Splitting the data into the LEFT and the RIGHT subsets...")
     df_left=df.copy()
     df_left=df.where(df["Left_side"]).where(df["Parent"]!="Image").dropna(axis=0, how='all')
@@ -541,6 +549,8 @@ def process_left_right_trees(df, list_to_keep, path_prefix_results, result_filen
     df_left.reset_index(drop=False, inplace=True)
     df_left.rename(columns={"index": "ori_index"}, inplace=True)
     df_left.astype({"Num Detections": 'int64'})
+    for i in range(cls):
+        df_left.astype({"Num "+classes_list[i]: 'int64'})
     df_left.to_csv(path_prefix_results+result_filename+"left.csv",index_label="index")
     print("Saved the file","\'"+result_filename+"left.csv\'","for the LEFT side")
 
@@ -552,17 +562,19 @@ def process_left_right_trees(df, list_to_keep, path_prefix_results, result_filen
     df_right.reset_index(drop=False, inplace=True)
     df_right.rename(columns={"index": "ori_index"}, inplace=True)
     df_right.astype({"Num Detections": 'int64'})
+    for i in range(cls):
+        df_right.astype({"Num "+classes_list[i]: 'int64'})
     df_right.to_csv(path_prefix_results+result_filename+"right.csv",index_label="index")
     print("Saved the file","\'"+result_filename+"right.csv\'","for the RIGHT side")
     print("\nCollating the RIGHT-side dataframe...")
-    df_right_collated=flatten_df_by_Name(df_right)
+    df_right_collated=flatten_df_by_Name(df_right, classes_list)
     print(" ->",df_right_collated.shape[0],"resulting rows, i.e. unique structure names.")
 
     df_right_collated[["Class",'ROI_Atlas_AP']].to_csv(path_prefix_results+result_filename+"collated_right_AP_coordinates.csv",index=False)
     print(" -> Saved the RIGHT-side AP coordinate lists per each atlas ROI (centroids) into the file","\'"+result_filename+"collated_right_AP_coordinates.csv\'")
 
     print("\nCollating the LEFT-side dataframe...")
-    df_left_collated=flatten_df_by_Name(df_left)
+    df_left_collated=flatten_df_by_Name(df_left,classes_list)
     print(" ->",df_left_collated.shape[0],"resulting rows, i.e. unique structure names.")
 
     df_left_collated[["Class",'ROI_Atlas_AP']].to_csv(path_prefix_results+result_filename+"collated_left_AP_coordinates.csv",index=False)
@@ -585,20 +597,92 @@ def process_left_right_trees(df, list_to_keep, path_prefix_results, result_filen
     return df_list
     
     
-def summary_per_ROI(df_list, super_list, mode, save_mode, term_flag, target, path_prefix_results, result_filename):
     
+   
+def generate_AP_traces(tree_df, ori_df, column, AP_values, mode, lst):
+    #tree_df - dataframe containing the collated tree
+    #ori_df - uncollated dataframe over multiple slices which was used as a source for creating the collated tree
+    #column - name of the column with values to be sampled over AP axis
+    #AP_values - name of the column with the AP coordinate values to take
+    #mode: if 1, then the AP graphs will be generated only for the terminal leaves of the tree
+    #      if 2, then for ALL the entries in the dataframe (every row)
+    #      if 3, then for the structures whose acronyms ("Class") are listed in the list 'lst'
+    #      if 4, then for the structures whose IDs ("ID") are listed in the list 'lst'
+    #      if <=0, then for the entries of hierarchical level equal to (-1)*mode
+    #lst: list with the values, only taken into account when mode=3 or mode=4
+    if mode<=0:
+        df_masked=tree_df.where(tree_df["Tree_level"] == -mode).dropna(axis=0, how='all')
+    elif mode==1:
+        df_masked=tree_df.where(tree_df["Term_leaf"] == True).dropna(axis=0, how='all')
+    elif mode==3:
+        df_masked=pd.concat([tree_df.where(tree_df["Class"]==element).dropna(axis=0, how='all') for element in lst],ignore_index=True,sort=False)
+    elif mode==4:
+        df_masked=pd.concat([tree_df.where(tree_df["ID"]==element).dropna(axis=0, how='all') for element in lst],ignore_index=True,sort=False)
+    elif mode==2:
+        df_masked=tree_df.dropna(axis=0, how='all')
+    
+    AP_coords = ori_df[AP_values].unique()
+    idx = np.arange(len(AP_coords))
+    nans = np.zeros(len(AP_coords))
+    nans = np.nan
+    d = {AP_values: AP_coords}
+    for i in range(df_masked.shape[0]):
+        s=df_masked["Class"].iloc[i]+";"+df_masked["Name"].iloc[i]
+        bla = {s: nans}
+        d.update(bla)
+        
+    df_AP_graphs=pd.DataFrame(data=d, index=idx)
+    
+    for i in range(df_masked.shape[0]):
+        AP_lst=[float(element) for element in df_masked[AP_values].iloc[i].split(",")]
+        idx_lst=[int(element) for element in df_masked["ori_index"].iloc[i].split(",")]
+        for j in range(len(AP_coords)):
+            if AP_coords[j] in AP_lst:
+                k=ori_df.index[ori_df["ori_index"] == idx_lst[AP_lst.index(AP_coords[j])]].tolist()
+                df_AP_graphs.iloc[j, i+1]=ori_df.loc[k[0],column]
+                if len(k)>1:
+                    print(" -> Warning!!! Seems like there are multiple identical indices in the original dataframe.")
+                
+            
+            
+    return df_AP_graphs
+ 
+ 
+    
+def summary_per_ROI(df_list, super_list, classes_list, mode, save_mode, term_flag, target, path_prefix_results, result_filename):
+    
+    cls=len(classes_list)
+    
+    num_dets_list=["Num Detections"]
+    dens_list=["Density_Detections"]
+    classes_index=["Detections"]
+    det_files=["Detections"]
+    den_files=["Density"]
+    over_all=["over all"]
+        
+    for i in range(cls):
+        num_dets_list.append("Num "+classes_list[i])
+        dens_list.append("Density_"+classes_list[i])
+        classes_index.append(classes_list[i])
+        san="".join(c.replace(" ", "-") for c in classes_list[i] if c not in "\/:*?<>|")
+        det_files.append("Detections_"+san)
+        den_files.append("Density_"+san)
+        over_all.append("over all")
+        
     AP_coords="Root_Atlas_AP"    
-     
+         
     df_left = df_list[0]
     df_left_tree = df_list[1]
     df_left_collated = df_list[2]
     df_right = df_list[3]
     df_right_tree = df_list[4]
     df_right_collated = df_list[5]
-     
+        
+    left_dict={}
+    right_dict={}
+         
     for struc in super_list:
-        
-        
+            
         print("\n=> Processing", struc)
         if mode>0 and mode<4:
         # here, generate the list of acronyms by the selected top node of a sub-tree
@@ -606,83 +690,123 @@ def summary_per_ROI(df_list, super_list, mode, save_mode, term_flag, target, pat
             lst_left=acronym_list_subtree(df_left_collated, [], df_left_collated.index[df_left_collated["Class"]==str(struc)][0],term_flag)
         if mode==3:
             target=str(struc)
-       
-        print("Calculating the traces vs AP coordinates for the RIGHT-side...")
-
-        df_right_dets_vsAP=generate_AP_traces(df_right_tree, df_right, "Num Detections", AP_coords, 3, lst_right)
-        df_right_dens_vsAP=generate_AP_traces(df_right_tree, df_right, "Detection_Density", AP_coords, 3, lst_right)
+           
+        print("\nCalculating the traces vs AP coordinates for the RIGHT-side...")
+         
+        right_concat_dict_dets={}
+                    
+        for i in range(cls+1):
+            right_dict[num_dets_list[i]]=generate_AP_traces(df_right_tree, df_right, num_dets_list[i], AP_coords, 3, lst_right)
+            right_dict[dens_list[i]]=generate_AP_traces(df_right_tree, df_right, dens_list[i], AP_coords, 3, lst_right)
+            right_concat_dict_dets[num_dets_list[i]]=sum_up_rows(right_dict[num_dets_list[i]])
+                          
         df_right_area_vsAP=generate_AP_traces(df_right_tree, df_right, "Area µm^2", AP_coords, 3,  lst_right)
-        df_right_dets_sum=sum_up_rows(df_right_dets_vsAP)
-        df_right_dens_sum=sum_up_rows(df_right_dets_vsAP)
+        right_dict["areas_vs_AP"]=df_right_area_vsAP
+        
         df_right_area_sum=sum_up_rows(df_right_area_vsAP)
-        df_right_dens_sum=df_right_dets_sum/df_right_area_sum*1e6
+            
+        df_right_dets_sum=pd.concat(list(dict.values(right_concat_dict_dets)),ignore_index=True)
+        df_right_dets_sum.index=classes_index
+        df_right_dens_sum=df_right_dets_sum.copy()
+        
+        for i in range(df_right_dens_sum.shape[0]):
+            df_right_dens_sum.iloc[i]=df_right_dets_sum.iloc[i]/df_right_area_sum.iloc[0]*1e6
+            
         df_right_dets_sum.drop(AP_coords, inplace=True, axis=1)
-        df_right_dets_sum.insert(0, AP_coords, ["over all"])
+        df_right_dets_sum.insert(1, AP_coords, over_all)
+            
         df_right_dens_sum.drop(AP_coords, inplace=True, axis=1)
-        df_right_dens_sum.insert(0, AP_coords, ["over all"])
+        df_right_dens_sum.insert(1, AP_coords, over_all)
+            
         df_right_area_sum.drop(AP_coords, inplace=True, axis=1)
-        df_right_area_sum.insert(0, AP_coords, ["over all"])
-        print(" -> Generated",df_right_dets_vsAP.shape[1]-1,"traces.")
+        df_right_area_sum.insert(1, AP_coords, ["over all"])
+        
+        right_dict["detections_total"]=df_right_dets_sum
+        right_dict["densities_total"]=df_right_dens_sum
+        right_dict["areas_total"]=df_right_area_sum
+             
+        print("\n -> Generated",right_dict[num_dets_list[0]].shape[1]-1,"traces.")
         if mode>=1 and mode<=3:
-              print(" Processed acronyms:",lst_right)
+            print("\n Processed acronyms:",lst_right)
 
         if save_mode=="xlsx":
             with pd.ExcelWriter(path_prefix_results+result_filename+"right_data_vsAP_"+target+".xlsx") as writer:  
-                df_right_dets_vsAP.rename(columns={AP_coords: 'AP_coord_mm'}).to_excel(writer, sheet_name='Num Detections')
+                for i in range(cls+1):
+                    right_dict[num_dets_list[i]].rename(columns={AP_coords: 'AP_coord_mm'}).to_excel(writer, sheet_name=det_files[i])
+                    right_dict[dens_list[i]].rename(columns={AP_coords: 'AP_coord_mm'}).to_excel(writer, sheet_name=den_files[i])                
                 df_right_area_vsAP.rename(columns={AP_coords: 'AP_coord_mm'}).to_excel(writer, sheet_name='Area (µm^2)')
-                df_right_dens_vsAP.rename(columns={AP_coords: 'AP_coord_mm'}).to_excel(writer, sheet_name='Density per mm^2')
                 df_right_dets_sum.rename(columns={AP_coords: 'AP_coord_mm'}).to_excel(writer, sheet_name='Tot. Detections')
                 df_right_area_sum.rename(columns={AP_coords: 'AP_coord_mm'}).to_excel(writer, sheet_name='Tot. area (µm^2)')
                 df_right_dens_sum.rename(columns={AP_coords: 'AP_coord_mm'}).to_excel(writer, sheet_name='Tot. density per mm^2')
                 print("\nSaved the file","\'"+result_filename+"right_data_vsAP_"+target+".xlsx\'","for the data vs AP coordinates.")
         elif save_mode=="csv":
-            df_right_dets_vsAP.rename(columns={AP_coords: 'AP_coord_mm'}).to_csv(path_prefix_results+result_filename+"right_data_vsAP_"+target+"_detections.csv")
+            for i in range(cls+1):
+                right_dict[num_dets_list[i]].rename(columns={AP_coords: 'AP_coord_mm'}).to_csv(path_prefix_results+result_filename+"right_data_vsAP_"+target+"_"+det_files[i]+".csv")
+                right_dict[dens_list[i]].rename(columns={AP_coords: 'AP_coord_mm'}).to_csv(path_prefix_results+result_filename+"right_data_vsAP_"+target+"_"+den_files[i]+".csv")
             df_right_area_vsAP.rename(columns={AP_coords: 'AP_coord_mm'}).to_csv(path_prefix_results+result_filename+"right_data_vsAP_"+target+"_areas.csv")
-            df_right_dens_vsAP.rename(columns={AP_coords: 'AP_coord_mm'}).to_csv(path_prefix_results+result_filename+"right_data_vsAP_"+target+"_density.csv")
             df_right_dets_sum.rename(columns={AP_coords: 'AP_coord_mm'}).to_csv(path_prefix_results+result_filename+"right_data_vsAP_"+target+"_tot_detections.csv")
             df_right_area_sum.rename(columns={AP_coords: 'AP_coord_mm'}).to_csv(path_prefix_results+result_filename+"right_data_vsAP_"+target+"_tot_areas.csv")
             df_right_dens_sum.rename(columns={AP_coords: 'AP_coord_mm'}).to_csv(path_prefix_results+result_filename+"right_data_vsAP_"+target+"_tot_density.csv")
-            print("\nSaved 6 .csv files","\'"+result_filename+"right_data_vsAP_"+target+"*.csv\'","for the data vs AP coordinates.")
+            print("\nSaved "+str((cls+3)*2)+" .csv files","\'"+result_filename+"right_data_vsAP_"+target+"*.csv\'","for the data vs AP coordinates.")
 
      
-        print("\nCalculating the traces vs AP coordinates for the LEFT-side...")
-
-        df_left_dets_vsAP=generate_AP_traces(df_left_tree, df_left, "Num Detections", AP_coords, 3, lst_left)
-        df_left_dens_vsAP=generate_AP_traces(df_left_tree, df_left, "Detection_Density", AP_coords, 3, lst_left)
-        df_left_area_vsAP=generate_AP_traces(df_left_tree, df_left, "Area µm^2", AP_coords, 3, lst_left)
-        df_left_dets_sum=sum_up_rows(df_left_dets_vsAP)
-        df_left_dens_sum=sum_up_rows(df_left_dets_vsAP)
+        print("\n\nCalculating the traces vs AP coordinates for the LEFT-side...")
+         
+        left_concat_dict_dets={}
+                    
+        for i in range(cls+1):
+            left_dict[num_dets_list[i]]=generate_AP_traces(df_left_tree, df_left, num_dets_list[i], AP_coords, 3, lst_left)
+            left_dict[dens_list[i]]=generate_AP_traces(df_left_tree, df_left, dens_list[i], AP_coords, 3, lst_left)
+            left_concat_dict_dets[num_dets_list[i]]=sum_up_rows(left_dict[num_dets_list[i]])
+                          
+        df_left_area_vsAP=generate_AP_traces(df_left_tree, df_left, "Area µm^2", AP_coords, 3,  lst_left)
+        left_dict["areas_vs_AP"]=df_left_area_vsAP
+        
         df_left_area_sum=sum_up_rows(df_left_area_vsAP)
-        df_left_dens_sum=df_left_dets_sum/df_left_area_sum*1e6
+            
+        df_left_dets_sum=pd.concat(list(dict.values(left_concat_dict_dets)),ignore_index=True)
+        df_left_dets_sum.index=classes_index
+        df_left_dens_sum=df_left_dets_sum.copy()
+        
+        for i in range(df_left_dens_sum.shape[0]):
+            df_left_dens_sum.iloc[i]=df_left_dets_sum.iloc[i]/df_left_area_sum.iloc[0]*1e6
+            
         df_left_dets_sum.drop(AP_coords, inplace=True, axis=1)
-        df_left_dets_sum.insert(0, AP_coords, ["over all"])
+        df_left_dets_sum.insert(1, AP_coords, over_all)
+            
         df_left_dens_sum.drop(AP_coords, inplace=True, axis=1)
-        df_left_dens_sum.insert(0, AP_coords, ["over all"])
+        df_left_dens_sum.insert(1, AP_coords, over_all)
+            
         df_left_area_sum.drop(AP_coords, inplace=True, axis=1)
-        df_left_area_sum.insert(0, AP_coords, ["over all"])
-        print(" -> Generated",df_left_dets_vsAP.shape[1]-1,"traces.")
+        df_left_area_sum.insert(1, AP_coords, ["over all"])
+        
+        left_dict["detections_total"]=df_left_dets_sum
+        left_dict["densities_total"]=df_left_dens_sum
+        left_dict["areas_total"]=df_left_area_sum
+             
+        print("\n -> Generated",left_dict[num_dets_list[0]].shape[1]-1,"traces.")
         if mode>=1 and mode<=3:
-              print(" Processed acronyms:",lst_left)
+            print("\n Processed acronyms:",lst_left)
+
         if save_mode=="xlsx":
             with pd.ExcelWriter(path_prefix_results+result_filename+"left_data_vsAP_"+target+".xlsx") as writer:  
-                df_left_dets_vsAP.rename(columns={AP_coords: 'AP_coord_mm'}).to_excel(writer, sheet_name='Num Detections')
-                df_left_area_vsAP.rename(columns={AP_coords: 'AP_coord_mm'}).to_excel(writer, sheet_name='Area µm^2')
-                df_left_dens_vsAP.rename(columns={AP_coords: 'AP_coord_mm'}).to_excel(writer, sheet_name='Density per mm^2')
+                for i in range(cls+1):
+                    left_dict[num_dets_list[i]].rename(columns={AP_coords: 'AP_coord_mm'}).to_excel(writer, sheet_name=det_files[i])
+                    left_dict[dens_list[i]].rename(columns={AP_coords: 'AP_coord_mm'}).to_excel(writer, sheet_name=den_files[i])                
+                df_left_area_vsAP.rename(columns={AP_coords: 'AP_coord_mm'}).to_excel(writer, sheet_name='Area (µm^2)')
                 df_left_dets_sum.rename(columns={AP_coords: 'AP_coord_mm'}).to_excel(writer, sheet_name='Tot. Detections')
                 df_left_area_sum.rename(columns={AP_coords: 'AP_coord_mm'}).to_excel(writer, sheet_name='Tot. area (µm^2)')
                 df_left_dens_sum.rename(columns={AP_coords: 'AP_coord_mm'}).to_excel(writer, sheet_name='Tot. density per mm^2')
                 print("\nSaved the file","\'"+result_filename+"left_data_vsAP_"+target+".xlsx\'","for the data vs AP coordinates.")
         elif save_mode=="csv":
-            df_left_dets_vsAP.rename(columns={AP_coords: 'AP_coord_mm'}).to_csv(path_prefix_results+result_filename+"left_data_vsAP_"+target+"_detections.csv")
+            for i in range(cls+1):
+                left_dict[num_dets_list[i]].rename(columns={AP_coords: 'AP_coord_mm'}).to_csv(path_prefix_results+result_filename+"left_data_vsAP_"+target+"_"+det_files[i]+".csv")
+                left_dict[dens_list[i]].rename(columns={AP_coords: 'AP_coord_mm'}).to_csv(path_prefix_results+result_filename+"left_data_vsAP_"+target+"_"+den_files[i]+".csv")
             df_left_area_vsAP.rename(columns={AP_coords: 'AP_coord_mm'}).to_csv(path_prefix_results+result_filename+"left_data_vsAP_"+target+"_areas.csv")
-            df_left_dens_vsAP.rename(columns={AP_coords: 'AP_coord_mm'}).to_csv(path_prefix_results+result_filename+"left_data_vsAP_"+target+"_density.csv")
             df_left_dets_sum.rename(columns={AP_coords: 'AP_coord_mm'}).to_csv(path_prefix_results+result_filename+"left_data_vsAP_"+target+"_tot_detections.csv")
             df_left_area_sum.rename(columns={AP_coords: 'AP_coord_mm'}).to_csv(path_prefix_results+result_filename+"left_data_vsAP_"+target+"_tot_areas.csv")
             df_left_dens_sum.rename(columns={AP_coords: 'AP_coord_mm'}).to_csv(path_prefix_results+result_filename+"left_data_vsAP_"+target+"_tot_density.csv")
-            print("\nSaved 6 .csv files","\'"+result_filename+"left_data_vsAP_"+target+"*.csv\'","for the data vs AP coordinates.")
+            print("\nSaved "+str((cls+3)*2)+" .csv files","\'"+result_filename+"left_data_vsAP_"+target+"*.csv\'","for the data vs AP coordinates.")
     
-    
-    left_list = [df_left_dets_vsAP, df_left_dens_vsAP, df_left_area_vsAP, df_left_dets_sum, df_left_dens_sum, df_left_area_sum]
-    right_list = [df_right_dets_vsAP, df_right_dens_vsAP, df_right_area_vsAP, df_right_dets_sum, df_right_dens_sum, df_right_area_sum]
-    
-    return left_list, right_list
+    return left_dict, right_dict
+ 
