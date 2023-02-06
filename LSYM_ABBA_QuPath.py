@@ -706,12 +706,14 @@ def summary_per_ROI(df_list, super_list, classes_list, mode, save_mode, term_fla
         df_right_area_sum=sum_up_rows(df_right_area_vsAP)
             
         df_right_dets_sum=pd.concat(list(dict.values(right_concat_dict_dets)),ignore_index=True)
-        df_right_dets_sum.index=classes_index
         df_right_dens_sum=df_right_dets_sum.copy()
         
         for i in range(df_right_dens_sum.shape[0]):
             df_right_dens_sum.iloc[i]=df_right_dets_sum.iloc[i]/df_right_area_sum.iloc[0]*1e6
-            
+        
+        df_right_dets_sum.insert(1, "Class_name", classes_index)#.index=classes_index
+        df_right_dens_sum.insert(1, "Class_name", classes_index)#.index=classes_index
+        
         df_right_dets_sum.drop(AP_coords, inplace=True, axis=1)
         df_right_dets_sum.insert(1, AP_coords, over_all)
             
@@ -765,12 +767,14 @@ def summary_per_ROI(df_list, super_list, classes_list, mode, save_mode, term_fla
         df_left_area_sum=sum_up_rows(df_left_area_vsAP)
             
         df_left_dets_sum=pd.concat(list(dict.values(left_concat_dict_dets)),ignore_index=True)
-        df_left_dets_sum.index=classes_index
         df_left_dens_sum=df_left_dets_sum.copy()
         
         for i in range(df_left_dens_sum.shape[0]):
             df_left_dens_sum.iloc[i]=df_left_dets_sum.iloc[i]/df_left_area_sum.iloc[0]*1e6
-            
+        
+        df_left_dets_sum.insert(1, "Class_name", classes_index)#.index=classes_index
+        df_left_dens_sum.insert(1, "Class_name", classes_index)#.index=classes_index
+        
         df_left_dets_sum.drop(AP_coords, inplace=True, axis=1)
         df_left_dets_sum.insert(1, AP_coords, over_all)
             
