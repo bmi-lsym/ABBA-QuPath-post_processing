@@ -516,7 +516,7 @@ def load_csv_data(df_index, swap_pos, classes_list, path_prefix, path_prefix_res
     print("\n -> Saved "+str(df_dets.shape[0])+" unclassified detection coordinates into","\'"+result_filename+"detection_coordinates.csv\'")
     
     for i in range(cls):
-        san="".join(c.replace(" ", "-") for c in classes_list[i] if c not in "\/:*?<>|")
+        san="".join(c.replace(" ", "_") for c in classes_list[i] if c not in "\/:*?<>|")
         filename=result_filename+"detection_coordinates_"+san+".csv"
         df_i=df_dets.where(df_dets["Class"]==classes_list[i]).dropna(axis=0, how='all')[["Atlas_X","Atlas_Y","Atlas_Z"]]
         df_i.to_csv(path_prefix_results+filename,index=False)
@@ -664,7 +664,7 @@ def summary_per_ROI(df_list, super_list, classes_list, mode, save_mode, term_fla
         num_dets_list.append("Num "+classes_list[i])
         dens_list.append("Density_"+classes_list[i])
         classes_index.append(classes_list[i])
-        san="".join(c.replace(" ", "-") for c in classes_list[i] if c not in "\/:*?<>|")
+        san="".join(c.replace(" ", "_") for c in classes_list[i] if c not in "\/:*?<>|")
         det_files.append("Detections_"+san)
         den_files.append("Density_"+san)
         over_all.append("over all")
