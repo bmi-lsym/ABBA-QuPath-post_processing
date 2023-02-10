@@ -296,11 +296,13 @@ Function ABBA_processing_GUI_doone()
       endif
       
        AppendLayoutObject/F=0/T=1/R=(45,78,570,540) Graph $(dataset_ID+"_"+brain_area+"_totdens"+class_short)
-	   SetDrawLayer UserFront
+       SetDrawLayer UserFront
 	   SetDrawEnv fsize= 14
 	   DrawText 29.25,60.75,"Data for "+ dataset_ID
 	   SetDrawEnv fsize= 14
 	   DrawText 101.25,75, brain_area+" areas: total density of detections. Detection class: \""+by_class+"\""
+      
+      DoWindow/HIDE=1 $(dataset_ID+"_"+brain_area+"_totdens"+class_short)
       
       lay_dens_existed=1
       
@@ -322,6 +324,8 @@ Function ABBA_processing_GUI_doone()
       SetDrawEnv fsize= 14
 	   DrawText 84,582, brain_area+" areas: spatial distribution of the density of detections" 
           
+      DoWindow/HIDE=1 $(dataset_ID+"_"+brain_area+"_APldens"+class_short)
+      DoWindow/HIDE=1 $(dataset_ID+"_"+brain_area+"_APrdens"+class_short)
 
        //detections
        
@@ -345,7 +349,7 @@ Function ABBA_processing_GUI_doone()
       
       lay_dets_existed=1
      
-          
+      DoWindow/HIDE=1 $(dataset_ID+"_"+brain_area+"_totdets"+class_short) 
       
       Duplicate/O $(res_dets_left+"_wavelist") $(res_detsAP_left+"_wavelist")
       Duplicate/O $(res_dets_right+"_wavelist") $(res_detsAP_right+"_wavelist")
@@ -365,7 +369,8 @@ Function ABBA_processing_GUI_doone()
       SetDrawEnv fsize= 14
 	   DrawText 84,582, brain_area+" areas: spatial distribution of the detections"  
        
-       
+      DoWindow/HIDE=1 $(dataset_ID+"_"+brain_area+"_APldets"+class_short)
+      DoWindow/HIDE=1 $(dataset_ID+"_"+brain_area+"_APrdets"+class_short)
 
      else //master sort by the right side
 
@@ -391,6 +396,8 @@ Function ABBA_processing_GUI_doone()
       
       lay_dens_existed=1
       
+      DoWindow/HIDE=1 $(dataset_ID+"_"+brain_area+"_totdens"+class_short)
+      
       
       Duplicate/O $(res_dens_left+"_wavelist") $(res_densAP_left+"_wavelist")
       Duplicate/O $(res_dens_right+"_wavelist") $(res_densAP_right+"_wavelist")
@@ -411,8 +418,8 @@ Function ABBA_processing_GUI_doone()
 	   DrawText 84,582, brain_area+" areas: spatial distribution of the density of detections" 
           
 
-
-
+      DoWindow/HIDE=1 $(dataset_ID+"_"+brain_area+"_APldens"+class_short)
+      DoWindow/HIDE=1 $(dataset_ID+"_"+brain_area+"_APrdens"+class_short)
 
        //detections
        
@@ -436,6 +443,7 @@ Function ABBA_processing_GUI_doone()
       
       lay_dets_existed=1
      
+      DoWindow/HIDE=1 $(dataset_ID+"_"+brain_area+"_totdets"+class_short)
      
       
       Duplicate/O $(res_dets_left+"_wavelist") $(res_detsAP_left+"_wavelist")
@@ -456,8 +464,9 @@ Function ABBA_processing_GUI_doone()
       SetDrawEnv fsize= 14
 	   DrawText 84,582, brain_area+" areas: spatial distribution of the detections" 
        
-
-
+      DoWindow/HIDE=1 $(dataset_ID+"_"+brain_area+"_APldets"+class_short)
+      DoWindow/HIDE=1 $(dataset_ID+"_"+brain_area+"_APrdets"+class_short)
+      
 
 	  endif
      
@@ -674,6 +683,7 @@ Function ABBA_processing_GUI_domany()
       
       lay_dens_existed=1
       
+      DoWindow/HIDE=1 $(dataset_ID+"_totdens"+class_short)
          
       
       Duplicate/O $(res_dens_left+"_wavelist") $(res_densAP_left+"_wavelist")
@@ -693,6 +703,8 @@ Function ABBA_processing_GUI_domany()
       for(i=0; i<ItemsInList(graphs_left,";"); i+=1)
        AppendLayoutObject/T=1/F=0 Graph $(StringFromList(i, graphs_left, ";"))
        AppendLayoutObject/T=1/F=0 Graph $(StringFromList(i, graphs_right, ";"))
+       DoWindow/HIDE=1 $(StringFromList(i, graphs_left, ";"))
+       DoWindow/HIDE=1 $(StringFromList(i, graphs_right, ";"))
       endfor
       
       Execute "Tile/O=1"
@@ -724,6 +736,7 @@ Function ABBA_processing_GUI_domany()
       
       lay_dets_existed=1
       
+      DoWindow/HIDE=1 $(dataset_ID+"_totdets"+class_short)
       
       Duplicate/O $(res_dets_left+"_wavelist") $(res_detsAP_left+"_wavelist")
       Duplicate/O $(res_dets_right+"_wavelist") $(res_detsAP_right+"_wavelist")
@@ -742,6 +755,8 @@ Function ABBA_processing_GUI_domany()
       for(i=0; i<ItemsInList(graphs_left,";"); i+=1)
        AppendLayoutObject/T=1/F=0 Graph $(StringFromList(i, graphs_left, ";"))
        AppendLayoutObject/T=1/F=0 Graph $(StringFromList(i, graphs_right, ";"))
+       DoWindow/HIDE=1 $(StringFromList(i, graphs_left, ";"))
+       DoWindow/HIDE=1 $(StringFromList(i, graphs_right, ";"))
       endfor
       
       Execute "Tile/O=1"
@@ -775,7 +790,7 @@ Function ABBA_processing_GUI_domany()
       
       lay_dens_existed=1
       
-      
+      DoWindow/HIDE=1 $(dataset_ID+"_totdens"+class_short)
       
       Duplicate/O $(res_dens_left+"_wavelist") $(res_densAP_left+"_wavelist")
       Duplicate/O $(res_dens_right+"_wavelist") $(res_densAP_right+"_wavelist")
@@ -795,6 +810,8 @@ Function ABBA_processing_GUI_domany()
       for(i=0; i<ItemsInList(graphs_left,";"); i+=1)
        AppendLayoutObject/T=1/F=0 Graph $(StringFromList(i, graphs_left, ";"))
        AppendLayoutObject/T=1/F=0 Graph $(StringFromList(i, graphs_right, ";"))
+       DoWindow/HIDE=1 $(StringFromList(i, graphs_left, ";"))
+       DoWindow/HIDE=1 $(StringFromList(i, graphs_right, ";"))
       endfor
       
       Execute "Tile/O=1"
@@ -828,7 +845,7 @@ Function ABBA_processing_GUI_domany()
       
       lay_dets_existed=1
       
-      
+      DoWindow/HIDE=1 $(dataset_ID+"_totdets"+class_short)
       
       Duplicate/O $(res_dets_left+"_wavelist") $(res_detsAP_left+"_wavelist")
       Duplicate/O $(res_dets_right+"_wavelist") $(res_detsAP_right+"_wavelist")
@@ -849,6 +866,8 @@ Function ABBA_processing_GUI_domany()
       for(i=0; i<ItemsInList(graphs_left,";"); i+=1)
        AppendLayoutObject/T=1/F=0 Graph $(StringFromList(i, graphs_left, ";"))
        AppendLayoutObject/T=1/F=0 Graph $(StringFromList(i, graphs_right, ";"))
+       DoWindow/HIDE=1 $(StringFromList(i, graphs_left, ";"))
+       DoWindow/HIDE=1 $(StringFromList(i, graphs_right, ";"))
       endfor
       
       Execute "Tile/O=1"
@@ -2546,3 +2565,60 @@ Window density_detections_FV6622() : Layout
 	AppendLayoutObject/F=0/T=1/R=(290,506,593,755) Graph FV6622_Isocortex_AP_right_dens
 	LayoutPageAction page= 3
 EndMacro
+
+
+
+Function/T MakePython_dict(key_wave, values_wave, first_N)
+ Wave/T key_wave
+ Wave values_wave
+ Variable first_N
+ 
+ Variable i, items=min(first_N,numpnts(key_wave))
+ 
+ if (numpnts(key_wave)!=numpnts(values_wave))
+   printf "Mismatch in the input wave lengths. Aborted."
+   return ""
+ endif  
+ 
+ 
+ String s="values = dict("
+ 
+ 
+ for(i=0;i<items;i+=1)
+  s=s+key_wave[i]+"="+num2str(values_wave[i])
+  if (i<items-1)
+   s=s+", "
+  endif 
+ 
+ endfor 
+ 
+ s=s+")"
+ 
+  
+  return s
+
+end
+
+
+Function/T MakePython_list_of_str(values_wave, first_N)
+ Wave/T values_wave
+ Variable first_N
+ 
+ Variable i,items=min(first_N,numpnts(values_wave))
+ 
+ String s="["
+ 
+ for(i=0;i<items;i+=1)
+  s=s+"\""+values_wave[i]+"\""
+  if (i<items-1)
+   s=s+", "
+  endif 
+ 
+ endfor 
+ 
+ s=s+"]"
+ 
+  
+  return s
+
+end
