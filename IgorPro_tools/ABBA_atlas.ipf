@@ -604,7 +604,7 @@ Function ABBA_processing_GUI_domany()
      
      String lay_dens=StringFromList(0, LayoutsAverage,";"), lay_dets=StringFromList(1, LayoutsAverage,";")
      String populate_layout, graphs_left, graphs_right
-     Variable i, lay_dens_existed=1, lay_dets_existed=1
+     Variable i, lay_dens_existed=1, lay_dets_existed=1, axis_max
      String class_path=by_class+":", class_short="C"+num2str(WhichListItem(by_class,globalclasses,";"))
      
      
@@ -692,9 +692,9 @@ Function ABBA_processing_GUI_domany()
       densAP_left=ReplaceString("total_density", densAP_left[p], "density")
       densAP_right=ReplaceString("total_density", densAP_right[p], "density")
       
-      graphs_left=MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_left, min(plot_N,numpnts(densAP_left)),dataset_ID+"_APldens"+class_short,1,"density of detections (mm\\S-2\\M)", "(65535,0,0)")
+      graphs_left=MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_left, min(plot_N,numpnts(densAP_left)),dataset_ID+"_APldens"+class_short,1,"\\Z08density of detections (mm\\S-2\\M)", "(65535,0,0)", same_max_axis=1)
       plotN=min(plot_N,numpnts(densAP_left))
-      graphs_right=MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_right, min(plot_N,numpnts(densAP_right)),dataset_ID+"_APrdens"+class_short,1,"density of detections (mm\\S-2\\M)", "(0,0,65535)")
+      graphs_right=MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_right, min(plot_N,numpnts(densAP_right)),dataset_ID+"_APrdens"+class_short,1,"\\Z08density of detections (mm\\S-2\\M)", "(0,0,65535)", same_max_axis=1)
 
       
       DoWindow/F $lay_dens
@@ -744,9 +744,9 @@ Function ABBA_processing_GUI_domany()
       detsAP_left=ReplaceString("total_detections", detsAP_left[p], "detections")
       detsAP_right=ReplaceString("total_detections", detsAP_right[p], "detections")
       
-      graphs_left=MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_left, min(plot_N,numpnts(detsAP_left)),dataset_ID+"_APldets"+class_short,1,"number of detections", "(65535,0,0)")
+      graphs_left=MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_left, min(plot_N,numpnts(detsAP_left)),dataset_ID+"_APldets"+class_short,1,"\\Z08number of detections", "(65535,0,0)", same_max_axis=1)
       plotN=min(plot_N,numpnts(detsAP_left))
-      graphs_right=MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_right, min(plot_N,numpnts(detsAP_right)),dataset_ID+"_APrdets"+class_short,1,"number of detections", "(0,0,65535)")
+      graphs_right=MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_right, min(plot_N,numpnts(detsAP_right)),dataset_ID+"_APrdets"+class_short,1,"\\Z08number of detections", "(0,0,65535)", same_max_axis=1)
 
       
       DoWindow/F $lay_dets
@@ -798,8 +798,8 @@ Function ABBA_processing_GUI_domany()
       densAP_left=ReplaceString("total_density", densAP_left[p], "density")
       densAP_right=ReplaceString("total_density", densAP_right[p], "density")
       
-      graphs_left=MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_left, min(plot_N,numpnts(densAP_left)),dataset_ID+"_APldens"+class_short,1, "density of detections (mm\\S-2\\M)", "(65535,0,0)")
-      graphs_right=MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_right, min(plot_N,numpnts(densAP_right)),dataset_ID+"_APrdens"+class_short,1, "density of detections (mm\\S-2\\M)", "(0,0,65535)")
+      graphs_left=MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_left, min(plot_N,numpnts(densAP_left)),dataset_ID+"_APldens"+class_short,1, "\\Z08density of detections (mm\\S-2\\M)", "(65535,0,0)", same_max_axis=1)
+      graphs_right=MakeAPGraph_averageAPs(acros, dataset_IDlist, densAP_right, min(plot_N,numpnts(densAP_right)),dataset_ID+"_APrdens"+class_short,1, "\\Z08density of detections (mm\\S-2\\M)", "(0,0,65535)", same_max_axis=1)
       plotN=min(plot_N,numpnts(densAP_right))
       
       
@@ -853,9 +853,9 @@ Function ABBA_processing_GUI_domany()
       detsAP_left=ReplaceString("total_detections", detsAP_left[p], "detections")
       detsAP_right=ReplaceString("total_detections", detsAP_right[p], "detections")
       
-      graphs_left=MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_left, min(plot_N,numpnts(detsAP_left)),dataset_ID+"_APldets"+class_short,1,"number of detections", "(65535,0,0)")
+      graphs_left=MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_left, min(plot_N,numpnts(detsAP_left)),dataset_ID+"_APldets"+class_short,1,"\\Z08number of detections", "(65535,0,0)", same_max_axis=1)
       plotN=min(plot_N,numpnts(detsAP_left))
-      graphs_right=MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_right, min(plot_N,numpnts(detsAP_right)),dataset_ID+"_APrdets"+class_short,1,"number of detections", "(0,0,65535)")
+      graphs_right=MakeAPGraph_averageAPs(acros, dataset_IDlist, detsAP_right, min(plot_N,numpnts(detsAP_right)),dataset_ID+"_APrdets"+class_short,1,"\\Z08number of detections", "(0,0,65535)", same_max_axis=1)
 
 
 
@@ -1886,11 +1886,9 @@ Function MakeBarGraph_average(w_left, w_right, names, llocs, res_win, axis_name)
    
    SetAxis top1 0,max_buf*1.05
    
-   
-  
-      
-
     printf "//Plotted data for %d nuclei.\n", numpnts(w_left)
+    
+    
 End
 
 
@@ -2010,7 +2008,7 @@ Function MakeAPGraph_uniqueAPs(acronym_lookup, w_data, top_n, res_win, axis_name
 End
 
 
-Function/T MakeAPGraph_averageAPs(acronym_lookup, mouse_list, w_data, top_n, res_win, AP_mode, axis_name, color)
+Function/T MakeAPGraph_averageAPs(acronym_lookup, mouse_list, w_data, top_n, res_win, AP_mode, axis_name, color, [same_max_axis])
  Wave/T acronym_lookup //text wave with the list of acronyms as in atlas.
  //needed to be supplied because of "non-liberal" wave naming of the data which replaced symbols like "/" or "-" in the acronyms with "_"  
  String mouse_list// , - separate list of folders with individual datasets
@@ -2021,11 +2019,19 @@ Function/T MakeAPGraph_averageAPs(acronym_lookup, mouse_list, w_data, top_n, res
  Variable AP_mode //if 0, then the centers of AP histogram bins will be used; if non-zero, then average AP coordinates will be used for X-axis  
  String axis_name //legend for X-axis
  String color
+ Variable same_max_axis
  
  String return_str=""
  
- Variable i, j, M=numpnts(acronym_lookup), match, N=ItemsInList(mouse_list, ";"), acro_n
+ Variable i, j, M=numpnts(acronym_lookup), match, N=ItemsInList(mouse_list, ";"), acro_n, set_max_flag=0, max_buf=0
  String path_to, s, acro, mouse, current, s1, s2
+ 
+ Make/N=(top_n)/O/T res_wins
+ 
+ 
+ if (ParamIsDefault(same_max_axis)!=1)
+   set_max_flag=1
+ endif
  
   
  for(i=0;i<top_n;i+=1) //over acronyms
@@ -2058,6 +2064,7 @@ Function/T MakeAPGraph_averageAPs(acronym_lookup, mouse_list, w_data, top_n, res
   //adding the average
   Display dat vs w_AP
   DoWindow/C $(res_win+acro)
+  res_wins[i]=res_win+acro
   
   return_str=return_str+res_win+acro+";"
   
@@ -2070,6 +2077,8 @@ Function/T MakeAPGraph_averageAPs(acronym_lookup, mouse_list, w_data, top_n, res
        Wave dat_j=$(s+"dropped_nan:"+NameOfWave(dat_jj))
        Wave w_AP_j=$(ReplaceString(current, path_to, mouse)+"'"+acronym_lookup[acro_n]+"_AP_coord'")
        AppendToGraph dat_j vs w_AP_j
+       WaveStats/Q dat_j
+       max_buf = (V_max > max_buf) ? V_max : max_buf
      endif
     endfor //over mice
     
@@ -2086,13 +2095,24 @@ Function/T MakeAPGraph_averageAPs(acronym_lookup, mouse_list, w_data, top_n, res
  
  ModifyGraph btLen=4
  Label left axis_name//"density (mm\\S-2\\M)";DelayUpdate
- Label bottom "AP coordinate (mm)"
+ Label bottom "\\Z08AP coordinate (mm)"
  
  SetDrawEnv xcoord= prel,ycoord= prel
  SetDrawEnv fstyle= 1,fsize= 9;DelayUpdate
  DrawText 0.753056234718826,0.111627906976744, acro
  
  endfor //over acronyms
+
+ 
+ if (set_max_flag)
+  for(i=0;i<top_n;i+=1)
+   DoWindow/F $(res_wins[i])
+   SetAxis left 0, max_buf   
+  endfor
+ endif
+
+ KillWaves/Z res_wins
+
   
   printf "//Plotted %d graphs.\n", top_n
   
@@ -2568,10 +2588,11 @@ EndMacro
 
 
 
-Function/T MakePython_dict(key_wave, values_wave, first_N)
+Function/T MakePython_dict(key_wave, values_wave, first_N, key_as_string)
  Wave/T key_wave
  Wave values_wave
  Variable first_N
+ Variable key_as_string
  
  Variable i, items=min(first_N,numpnts(key_wave))
  
@@ -2585,7 +2606,12 @@ Function/T MakePython_dict(key_wave, values_wave, first_N)
  
  
  for(i=0;i<items;i+=1)
-  s=s+key_wave[i]+"="+num2str(values_wave[i])
+  if (key_as_string==0)
+   s=s+key_wave[i]+"="+num2str(values_wave[i])
+  else
+   s=s+"\""+key_wave[i]+"\"="+num2str(values_wave[i])
+  endif
+  
   if (i<items-1)
    s=s+", "
   endif 
