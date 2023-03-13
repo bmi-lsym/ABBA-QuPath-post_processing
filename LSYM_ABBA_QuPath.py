@@ -7,7 +7,7 @@ import jpype.imports
 import untangle
 from jpype.types import *
 from qupath.lib.gui.measure import ObservableMeasurementTableData
-
+import urllib.parse
 
 
 def parse_abba_project(df_abba, df_abba_src):
@@ -377,7 +377,7 @@ def read_index_file(index_filename, path_prefix):
 
 def extract_QuPath_data(df_index, path_prefix):
     
-    qp_list=df_index["QuPath_project_location"].drop_duplicates()   
+    qp_list=df_index["QuPath_project_location"].apply(urllib.parse.unquote).drop_duplicates()   
     if (len(qp_list)>1):
         prjs="projects"
     else:
