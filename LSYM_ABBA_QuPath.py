@@ -8,13 +8,90 @@ import untangle
 from jpype.types import *
 from qupath.lib.gui.measure import ObservableMeasurementTableData
 import urllib.parse
+import json
+from zipfile import ZipFile
 
 
-def parse_abba_project(df_abba, df_abba_src):
+def create_subfolders(ABBA_json, path_prefix, path_prefix_results, result_filename):
+    
+    allen_json_location="atlas_ontology/1.json" #local copy of the file
+    df_atlas=flatten_json_ontology(pd.read_json(allen_json_location) ,[0,0])
+ 
+    ## alternative source 1: read the official Allen Brain Atlas json file:
+    #allen_json_location="http://api.brain-map.org/api/v2/structure_graph_download/1.json" #web location
+    ## alternative source 2: location used by ABBA
+    #allen_json_location="https://zenodo.org/record/4486659/files/1.json" #reserve web location of the file
+    ## alternative source 3: from a local flattened csv file: 
+    #atlas_tree="atlas_ontology/structure_tree_safe_2017.csv"
+    #df_atlas=pd.read_csv(atlas_tree)
+    
+    
+    #creating the subfolders
+
+    try: 
+        os.mkdir(path_prefix) 
+    except OSError as error:
+        if str(error).startswith("[WinError 183]")==False:
+            print(error)
+    
+    try: 
+        os.mkdir(path_prefix_results) 
+    except OSError as error:
+        if str(error).startswith("[WinError 183]")==False:
+            print(error)
+      
+
+    #parsing the ABBA project data and generating the initial index file ("*_autoindex.xlsx")
+    abba_extension="".join(ABBA_json.split(".")[-1])
+    
+    if (abba_extension.lower()=="json"): #old versions
+        df_abba=pd.read_json(ABBA_json)
+        df_abba_src=pd.read_json(ABBA_json.partition(".json")[0]+"_sources.json")
+        abba_path="" #for the older versions        
+    elif (abba_extension.lower()=="abba"): #new version>=0.5.2, need to unzip
+        abba_path="\\".join(ABBA_json.split("\\")[:-1])+"\\unzip_tmp_fldr\\" #for the new versions >=0.5.2
+        with ZipFile(ABBA_json, 'r') as zip_ref:
+            fnames=[name for name in zip_ref.namelist()]
+            zip_ref.extractall(abba_path)
+        df_abba=pd.read_json(abba_path+"state.json")
+        df_abba_src=pd.read_json(abba_path+"sources.json")
+    else:
+        print("Unknown extension of the ABBA project file ('",abba_extension,"'), please check.")
+        return None, None
+    
+    print("Detected ABBA version %s, parsing..." % df_abba["version"].drop_duplicates()[0])
+    
+    df_index=parse_abba_project(df_abba, df_abba_src, abba_path)
+
+    df_index.to_excel(path_prefix+result_filename+"autoindex.xlsx",index=False)
+
+    print("\nBased on ABBA project, created a template index file: \n"+path_prefix+result_filename+"autoindex.xlsx")
+    print(" -> It can be manually modified, if necessary, to update the list of images which will be processed")
+    print(" -> Please make sure that the working index file is specified in the next cell")
+    
+        
+    if (abba_extension.lower()=="abba"): #clean-up temporarily unpacked files
+        for fname in fnames:
+            try:
+                os.remove(abba_path+fname)
+            except OSError as e:
+                print("Error: %s file could not be deleted. %s" % (e.filename, e.strerror))
+        try:
+            os.rmdir(abba_path)
+        except OSError as e:
+            print("Temporary folder %s could not be deleted. %s" % (abba_path, e.strerror))
+     
+    
+    return df_atlas, df_index
+
+
+
+def parse_abba_project(df_abba, df_abba_src, abba_path):
     AP_coords_ABBA=[]
     sources_ABBA=[]
     xml_data=[]
     qp_projs=[]
+
     for i in range(df_abba.shape[0]):
         df_tmp=pd.json_normalize(pd.json_normalize(df_abba.loc[i,"slices_state_list"]).loc[0,"actions"])
         idx_lst=df_tmp.loc[0,"original_sources.source_indexes"]
@@ -25,19 +102,33 @@ def parse_abba_project(df_abba, df_abba_src):
         else:
             AP_coords_ABBA.append(df_tmp.loc[0,"original_location"])
         xml_data.append(pd.json_normalize(df_abba_src.loc[idx_lst[0],"sac"]).loc[0,"spimdata.datalocation"])
-        
+
+               
     xml_data_files=pd.Series(xml_data, copy=False).drop_duplicates()
     for i in range(xml_data_files.shape[0]):    
-        obj = untangle.parse(xml_data_files.iloc[i])
-        s=obj.SpimData.SequenceDescription.ImageLoader.qupath_project.cdata
-        qp_projs = [s[1:-1].partition("file:/")[2] if x == xml_data_files.iloc[i] else x for x in xml_data]
-        xml_data=qp_projs
+        obj = untangle.parse(abba_path+xml_data_files.iloc[i])
+        try: #try old style xml file
+            s=obj.SpimData.SequenceDescription.ImageLoader.qupath_project.cdata
+        except AttributeError: 
+            s=""
+        if (len(s)>0):
+            qp_projs = [s[1:-1].partition("file:/")[2] if x == xml_data_files.iloc[i] else x for x in xml_data]
+            xml_data=qp_projs
+        else: #try the new style
+            try:
+                s=obj.SpimData.SequenceDescription.ImageLoader.openers.cdata                
+            except AttributeError:
+                s=""
+            if (len(s)>0):
+                dict_list=json.loads(s)
+                qp_projs = qp_projs + [x['location'] if x['type']=='QUPATH' else "Unsupported opener (not QuPath)" for x in dict_list]
+                
 
     d={"Filename":sources_ABBA, "QuPath_project_location":qp_projs, "AP_mm":AP_coords_ABBA,"Swap_sides":False,"Swap_node":""}
     df_index=pd.DataFrame(data=d)
     
     return df_index
-
+    
 
 
 
@@ -313,46 +404,6 @@ def import_QuPath_annotations_java(image):
     return anno_df, dets_df, channels_list
     
     
-def create_subfolders(ABBA_json, path_prefix, path_prefix_results, result_filename):
-    
-    allen_json_location="atlas_ontology/1.json" #local copy of the file
-    df_atlas=flatten_json_ontology(pd.read_json(allen_json_location) ,[0,0])
- 
-    ## alternative source 1: read the official Allen Brain Atlas json file:
-    #allen_json_location="http://api.brain-map.org/api/v2/structure_graph_download/1.json" #web location
-    ## alternative source 2: location used by ABBA
-    #allen_json_location="https://zenodo.org/record/4486659/files/1.json" #reserve web location of the file
-    ## alternative source 3: from a local flattened csv file: 
-    #atlas_tree="atlas_ontology/structure_tree_safe_2017.csv"
-    #df_atlas=pd.read_csv(atlas_tree)
-    
-    
-    #creating the subfolders
-
-    try: 
-        os.mkdir(path_prefix) 
-    except OSError as error:
-        if str(error).startswith("[WinError 183]")==False:
-            print(error)
-    
-    try: 
-        os.mkdir(path_prefix_results) 
-    except OSError as error:
-        if str(error).startswith("[WinError 183]")==False:
-            print(error)
-      
-
-    #parsing the ABBA project data and generating the initial index file ("*_autoindex.xlsx")
-    df_abba=pd.read_json(ABBA_json)
-    df_abba_src=pd.read_json(ABBA_json.partition(".json")[0]+"_sources.json")
-    df_index=parse_abba_project(df_abba, df_abba_src)    
-    df_index.to_excel(path_prefix+result_filename+"autoindex.xlsx",index=False)
-
-    print("Based on ABBA project, created a template index file: \n"+path_prefix+result_filename+"autoindex.xlsx")
-    print(" -> It can be manually modified, if necessary, to update the list of images which will be processed")
-    print(" -> Please make sure that the working index file is specified in the next cell")
-    
-    return df_atlas, df_index
 
 
 def read_index_file(index_filename, path_prefix):
