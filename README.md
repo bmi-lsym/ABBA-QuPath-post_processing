@@ -84,8 +84,8 @@ Functionality:
  - image stack scaling such as pixel dimensions, units, and pixel origins for X, Y, Z dimensions are directly considered
  
  Installation:
- - at the moment, the script can be directly opened in the ImageJ script editor and executed from there
- - in future, a compiled .jar file for the plugin will be co-supplied
+ - the main script "fibers_cones.py" can be directly opened in the ImageJ script editor and executed from there
+ - a compiled .jar file for the plugin will be co-supplied in the future
  
  Usage:
  - GUI is largely self-explanatory
@@ -96,6 +96,6 @@ Functionality:
  - X-Y-Z translational coordinates for the fibers can be easily guessed by pointing the assumed fiber tip locations with the ImageJ cursor on the images. ImageJ reports the cursor coordinates in the status line; these (watch the units!) can be directly used for entering into the respective GUI fields
  - the surfaces of the fiber(s) and of the light cone(s) are rendered by populating them with dots at specific density ("Fiber density dpi" in dots/mm2). To save computational time, it is highly recommended to position the fibers at low settings (such as default 0.02), and when done, re-calculate high resolution output at higher settings (e.g. 0.1-0.15)
  - another parameter relevant for rendering the fiber and the "light cone" cross-sections is "Tolerance along Z", changing which may affect (improve or degrade) the quality of the outlines. Make small changes at a time, if needed.
- - after analysis is complete and all overlays are computed (see Menu "Analysis"), two provided Python scripts can be used as the starting point to further analyse the output .csv files (for the overlays of thresholded areas with atlas, or for the overlays of thresholded & illuminated areas with the atlas, respectively). The scripts produce the summed and normalized results over all the planes of the image stack and allow for batch-processing over multiple projects.  
+ - after analysis is complete and all overlays are computed (see Menu "Analysis"), two provided Python scripts (threshold_vs_atlas_processing.py and cones_vs_threshold_vs_atlas_processing.py) can be used as the starting point to further analyse the output .csv files of the main script, for the overlays of thresholded areas with atlas, and for the overlays of thresholded & illuminated areas with the atlas ROIs, respectively. The scripts produce the summed and normalized results over all the planes of the image stack and allow for batch-processing over multiple projects.  
  
  
