@@ -72,7 +72,7 @@ Usage:
 Functionality:
  - reading the TIFF RGB stack or multi-channel hyperstack files containing atlas-registered images of the post-hoc brain sections with the optic fiber tracks
  - fitting the cylindrical model(s) of >=1 optic fiber(s) into the visible fiber tracks using the GUI-specified X-Y-Z translations and rotations 
- - estimation of the illuminated brain tissue volume below the fiber tip ("light cone") based on the fiber parameters (as described in Aravanis et al., 2007 J Neural Eng; https://doi.org/10.1088/1741-2560/4/3/S02; PubMed ID: 17873414)
+ - estimation of the illuminated brain tissue volume below the fiber tip ("light cone") based on the fiber parameters (as described in Aravanis et al., 2007 J Neural Eng; https://doi.org/10.1088/1741-2560/4/3/S02)
  - determination of the brain areas expressing optogenetic construct using interactive intensity thresholding
  - calculation of the overlap areas between the expression area, "light cone" illuminated area, and the atlas ROIs, in all combinations
  - all generated regions of interest such as thresholding results or results of overlap are stored in ImageJ RoiManager format
