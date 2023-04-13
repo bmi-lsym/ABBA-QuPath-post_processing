@@ -67,12 +67,12 @@ Usage:
  
 ------------------------------------ 
  
-2) The GUI-assisted package for quantification of brain areas expressing optogenetic construct AND illuminated by light during experiments. Package content: sub-folder "Fibers_and_cones". Language: Jython for ImageJ as the main processing script, and optional Python scripts to post-process the .csv output files. Such analysis was previously described (see Baleisyte et al., 2022, Cell Reports; doi: 10.1016/j.celrep.2022.110850) and was performed in IgorPro in that study. The current tool is a functionally improved and more user-friendly version of that algorithm, which now runs under ImageJ/FIJI. 
+2) The GUI-assisted package for quantification of brain areas expressing optogenetic construct AND illuminated by light during experiments. Package content: sub-folder "Fibers_and_cones". Language: Jython for ImageJ as the main processing script, and optional Python scripts to post-process the .csv output files. Such analysis was previously described (see Baleisyte et al., 2022, Cell Reports; https://doi.org/10.1016/j.celrep.2022.110850) and was performed in IgorPro in that study. The current tool is a functionally improved and more user-friendly version of that algorithm, which now runs under ImageJ/FIJI. 
 
 Functionality:
  - reading the TIFF RGB stack or multi-channel hyperstack files containing atlas-registered images of the post-hoc brain sections with the optic fiber tracks
  - fitting the cylindrical model(s) of >=1 optic fiber(s) into the visible fiber tracks using the GUI-specified X-Y-Z translations and rotations 
- - estimation of the illuminated brain tissue volume below the fiber tip ("light cone") based on the fiber parameters (as described in Aravanis et al., 2007 J Neural Eng; doi: 10.1088/1741-2560/4/3/S02; PubMed ID: 17873414)
+ - estimation of the illuminated brain tissue volume below the fiber tip ("light cone") based on the fiber parameters (as described in Aravanis et al., 2007 J Neural Eng; https://doi.org/10.1088/1741-2560/4/3/S02; PubMed ID: 17873414)
  - determination of the brain areas expressing optogenetic construct using interactive intensity thresholding
  - calculation of the overlap areas between the expression area, "light cone" illuminated area, and the atlas ROIs, in all combinations
  - all generated regions of interest such as thresholding results or results of overlap are stored in ImageJ RoiManager format
