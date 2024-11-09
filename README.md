@@ -24,7 +24,7 @@ Functionality:
  
 Prerequisites:
 
- - installed QuPath (tested with v. 0.3.2)
+ - installed QuPath (tested with versions 0.3.2, 0.4.4)
  - installed Python environment including dependency packages (tested using Anaconda3 under Windows, Python 3.7)
  - the brain images was registered to the Allen Brain Atlas using ABBA-QuPath pipeline (see above)
  - transformed atlas ROIs were imported back to QuPath using an "ABBA extension" from BIOP (https://github.com/BIOP/qupath-extension-abba). Multiple QuPath projects per brain can be handled. 

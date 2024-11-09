@@ -12,6 +12,8 @@ import json
 from zipfile import ZipFile
 
 
+
+
 def create_subfolders(ABBA_json, path_prefix, path_prefix_results, result_filename):
   
     #parsing the ABBA project data and generating the initial index file ("*_autoindex.xlsx")
@@ -366,9 +368,15 @@ def import_QuPath_annotations_java(image):
 
     #col_names=['Image','Name','Class','Parent','ROI','Centroid X µm','Centroid Y µm','ID','Parent ID','Side','Num Detections','Area µm^2','Perimeter µm',"Atlas_X", "Atlas_Y", "Atlas_Z"]
     
-    # We need the ImageData and the Annotations we want the results from 
-    imagedata = image.java_object.readImageData()
-    objects = imagedata.getHierarchy().getAnnotationObjects()
+    # We need the ImageData and the Annotations we want the results from
+    old_QuPath = len(image._image_server.__dict__)==0
+    
+    if (old_QuPath): #old QuPath
+        imagedata = image.java_object.readImageData()
+        objects = imagedata.getHierarchy().getAnnotationObjects()
+    else: #newer
+        imagedata = image._image_data
+        objects = image.java_object.readHierarchy().getAnnotationObjects()
 
     # This class is the one that produces the same results as 
     # Measure > Show Annotation Measurements
@@ -378,7 +386,7 @@ def import_QuPath_annotations_java(image):
     
     col_names=[]
     for i in range(len(ob.getAllNames())):
-        col_names.append(ob.getAllNames()[i])
+        col_names.append(str(ob.getAllNames()[i]))
         
     channels_list=[s.replace("Num ","") for s in col_names if "Num " in s and s != "Num Detections"]    
     
@@ -388,11 +396,15 @@ def import_QuPath_annotations_java(image):
 
     for i in range(N_ans):
          for j in range(len(col_names)):
-            anno_data[i,j]=str(ob.getStringValue(objects[i], col_names[j]))
+            anno_data[i,j]=str(ob.getStringValue(objects[i], col_names[j])) if (j>0) else image.image_name
 
    
-
-    objects_det = imagedata.getHierarchy().getDetectionObjects()
+    if (old_QuPath): #old QuPath
+        objects_det = imagedata.getHierarchy().getDetectionObjects()
+    else: #newer
+        objects_det = image.java_object.readHierarchy().getDetectionObjects()
+    
+    
     ob_det = ObservableMeasurementTableData()
     ob_det.setImageData(imagedata , objects_det)
     
@@ -407,7 +419,7 @@ def import_QuPath_annotations_java(image):
     dets_data=np.empty((N_dets,len(dets_col_names)),dtype="U256")
     for i in range(N_dets):
          for j in range(len(dets_col_names)):
-            dets_data[i,j]=str(ob_det.getStringValue(objects_det[i], dets_col_names[j]))
+            dets_data[i,j]=str(ob_det.getStringValue(objects_det[i], dets_col_names[j])) if (j>0) else image.image_name
 
  
     anno_df=pd.DataFrame(anno_data, columns=col_names) 
@@ -461,6 +473,7 @@ def extract_QuPath_data(df_index, path_prefix):
   
     for qp_path in qp_list:
         qp = QuPathProject(qp_path, mode='r')  # open an existing project
+        print("Detected QuPath version:", qp.version)
 
         for ims in range(len(qp.images)):
             matched_index=df_index[df_index['Filename'].str.contains(qp.images[ims].image_name, regex=False)].reset_index()
@@ -481,10 +494,28 @@ def extract_QuPath_data(df_index, path_prefix):
     global_classes_list=[]    
     for i in range(len(idx_files_list)):
         image = qp_idx[i].images[qp_image_idx[i]]  # get the image
-        pixelWidth=float(image._image_server.getMetadata().getPixelWidthMicrons())
-        pixelHeight=float(image._image_server.getMetadata().getPixelHeightMicrons())
+        old_QuPath = len(image._image_server.__dict__) == 0
+        if (old_QuPath):
+            #older QuPath version <=0.3.2
+            pixelWidth=float(image._image_server.getMetadata().getPixelWidthMicrons())
+            pixelHeight=float(image._image_server.getMetadata().getPixelHeightMicrons())
+        else:
+            #newer QuPath version, tested on 0.4.4
+            pixelWidth=float(image._image_server._metadata['pixelCalibration']['pixelWidth']['value'])*to_um(image._image_server._metadata['pixelCalibration']['pixelWidth']['unit'])
+            pixelHeight=float(image._image_server._metadata['pixelCalibration']['pixelHeight']['value'])*to_um(image._image_server._metadata['pixelCalibration']['pixelHeight']['unit'])
+        
         print("     Importing annotations from the image",image.image_name,"(",image.width,"x",image.height,"px /","{:.1f}".format(image.width*pixelWidth),"x","{:.1f}".format(image.height*pixelHeight),"micron)...")
+         
+              
         qp_anno_df, qp_dets_df, channels_list = import_QuPath_annotations_java(image)
+        
+        if(not old_QuPath): # in newer QuPath, areas and perimeters get exported in px^2 and px! But we need um!
+            qp_anno_df['Area px^2']=qp_anno_df['Area px^2'].astype(np.float64)
+            qp_anno_df['Area px^2']=qp_anno_df['Area px^2']*pixelWidth*pixelHeight
+            qp_anno_df['Perimeter px']=qp_anno_df['Perimeter px'].astype(np.float64)
+            qp_anno_df['Perimeter px']=qp_anno_df['Perimeter px']*(pixelWidth+pixelHeight)*0.5
+            qp_anno_df.rename(columns={'Area px^2': 'Area \xb5m^2', 'Perimeter px': 'Perimeter \xb5m'}, inplace=True)
+        
         if (len(channels_list)>0):
             s_ch=(" in "+str(len(channels_list))+" classes: ")+"".join('"'+str(s)+'",' for s in channels_list)[:-1]
             classes_list=[str(s) for s in channels_list]
@@ -878,4 +909,20 @@ def summary_per_ROI(df_list, super_list, classes_list, mode, save_mode, term_fla
             print("\nSaved "+str((cls+3)*2)+" .csv files","\'"+result_filename+"left_data_vsAP_"+target+"*.csv\'","for the data vs AP coordinates.")
     
     return left_dict, right_dict
+    
+    
+def to_um(unit_name: str) -> float: #returns coefficient for converting the input units (string) to microns
+    unit=unit_name.lower()
+    if (unit=="mm"):
+        return 1e3
+    elif (unit=="um" or unit=="micron" or unit=="pixel" or unit=="u" or unit=='\xe2\xb5m' or unit=='\xb5m'):
+        return 1.0
+    elif (unit=="cm"):
+        return 1e4
+    elif (unit=="m"):
+        return 1e6
+    elif (unit=="nm"):
+        return 1e-3
+    elif (unit=="inch"):
+        return 2.54e4
  
