@@ -24,12 +24,12 @@ Functionality:
  
 Prerequisites:
 
- - installed QuPath (tested with versions 0.3.2, 0.4.4)
+ - installed QuPath (tested with the versions 0.3.2, 0.4.4)
  - installed Python environment including dependency packages (tested using Anaconda3 under Windows, Python 3.7)
- - the brain images was registered to the Allen Brain Atlas using ABBA-QuPath pipeline (see above)
- - transformed atlas ROIs were imported back to QuPath using an "ABBA extension" from BIOP (https://github.com/BIOP/qupath-extension-abba). Multiple QuPath projects per brain can be handled. 
+ - the brain images were registered to the Allen Brain Atlas using ABBA-QuPath pipeline (see above)
+ - transformed atlas ROIs were imported back to QuPath using an "ABBA extension" from BIOP (https://github.com/BIOP/qupath-extension-abba). This import can be evoked by a short script (QuPath_scripts/Load_ABBA_ROIs.groovy). Multiple QuPath projects per brain can be handled. 
  - detections of cells or other objects were done in QuPath (see QuPath_scripts/ for example detection codes)
- - a groovy code QuPath_scripts/pixel_to_Atlas_transform.groovy should be executed on the QuPath project to extract the transformed atlas coodrinates of detections and annotations
+ - a script QuPath_scripts/pixel_to_Atlas_transform.groovy should be executed on the QuPath project to extract the transformed atlas coordinates of cells (detections) and of the atlas ROI (annotations)
 
 
 Installation:
@@ -41,7 +41,7 @@ Installation:
              -> conda env create --name another_name -f abba_env.yml
  -  to complete the installation of paquo package (https://github.com/bayer-science-for-a-better-life/paquo), move the file Setup/.paquo.toml into the folder c:\Anaconda3\envs\abba\ or similar as appropriate; do not leave this file in the same sub-folder as the Jupyter notebook.
          Edit the line inside the file which points to the QuPath installation folder, it should read similar to the following:  
-         qupath_dir = "C:/QuPath/QuPath_0_3_2/"
+         qupath_dir = "C:/QuPath/QuPath_0_4_4/"
  - move the files "LSYM_ABBA_QuPath.py", "ABBA_QuPath_post_processing.ipynb" and the sub-folder "atlas_ontology" together into some working folder, for example "d:\MyFolder\ABBA_QuPath_scripts"
 
 
