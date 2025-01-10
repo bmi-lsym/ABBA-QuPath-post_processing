@@ -1438,7 +1438,7 @@ Function/T Split_by_classes(waves_list, report)
  
  Wave idx=$"XWave"
    
- if (WhichListItem("Class_name", waves_list,",")==-1) //compatibility with the old style Python script when the classes wave did not exist
+ if (WhichListItem("Class_name", waves_list,";")==-1) //compatibility with the old style Python script when the classes wave did not exist
    if (numpnts(idx)>1)
      printf "Error: cound not find the wave with the names of the detection classes. Aborted."
      return "" 
