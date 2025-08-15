@@ -331,6 +331,36 @@ def acronym_list_subtree(df, acro_lst, idx, term_only):
     return acro_lst
 
 
+def acronym_list_from_atlas(df, acro_lst, node_acronym, term_only):
+#recursive function which generates a list of acronyms that belong to a specified sub-tree 
+#  (all of the nodes below, and including the starting node)
+#df - input dataframe with the atlas antology
+#acro_lst - the starting list of acronyms, will be updated by adding acronyms in the order of exploring the sub-tree. 
+#  It can be empty at start
+#node_acronym - acronym of the starting node, from which the sub-tree is to be explored
+#term_only - bool flag; if True, then only terminal leaves of the sub-tree will be reported  
+    
+    idx=df.index[df["acronym"]==node_acronym].to_list()[0]
+    
+    if (df.at[idx, "acronym"] not in acro_lst) and term_only!=True:
+        acro_lst.append(df.at[idx, "acronym"])
+
+    is_parent = df["parent_structure_id"] == df.at[idx, "id"]
+    pos = np.flatnonzero(is_parent)
+    n = len(pos)
+       
+    if n==0:
+        if (df.at[idx, "acronym"] not in acro_lst) and term_only==True:
+            acro_lst.append(df.at[idx, "acronym"])
+        return acro_lst
+    else:
+        for i in range(n):
+            acro_lst=acronym_list_from_atlas(df, acro_lst, df.at[pos[i],"acronym"], term_only)
+    return acro_lst
+
+
+
+
 def flatten_json_ontology(df, from_to):
     #recrusively flattens the hierarchical tree of atlas ontology loaded from json file
     #df - the dataframe obtained after first normalization step of json file,
